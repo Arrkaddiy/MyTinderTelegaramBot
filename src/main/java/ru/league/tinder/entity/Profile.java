@@ -48,8 +48,6 @@ public class Profile {
         return sex;
     }
 
-
-
     public String getAbout() {
         return about;
     }
@@ -57,7 +55,6 @@ public class Profile {
     public void setAbout(String about) {
         this.about = about;
     }
-
 
     private String passwordGenerator(String name, String password) {
         return String.valueOf((Objects.hash(name) * Objects.hash(382875775))
