@@ -8,21 +8,29 @@ import ru.league.tinder.bot.BotContext;
 import java.util.Optional;
 
 @Component
-public class FavoritesState extends BaseState {
+public class FavoritesState implements State, StateSendMessage {
 
     private static final Logger log = LoggerFactory.getLogger(FavoritesState.class);
 
+    private StateType state;
+
     @Override
-    public void of(BotContext context) {
+    public void enter(BotContext context) {
+        log.debug("Выполнение сценария перехода на состояние");
+        state = StateType.FAVORITES;
+        sendTextMessage(context, "Любимцы:");
+    }
+
+    @Override
+    public void handleInput(BotContext context) {
         log.debug("Обработка контекста - '{}'", context);
         Optional<Commands> inputCommand = getCommand(context.getInput());
         inputCommand.ifPresent(command -> execute(command, context));
     }
 
     @Override
-    public void enter(BotContext context) {
-        log.debug("Выполнение сценария перехода на состояние");
-        sendTextMessage(context, "Любимцы:");
+    public StateType getState() {
+        return state;
     }
 
     private void execute(Commands command, BotContext context) {
@@ -39,7 +47,7 @@ public class FavoritesState extends BaseState {
             }
 
             case EXIT: {
-                executeExitCommand(context);
+                executeExitCommand();
                 break;
             }
 
@@ -64,6 +72,7 @@ public class FavoritesState extends BaseState {
 
     private void executeHelpCommand(BotContext context) {
         log.debug("Выполнение сценария \"Подсказки\" - (/help)");
+        state = StateType.FAVORITES;
         sendTextMessage(context, "Коль сударь иль сударыня заплутали:\n" +
                 "---------------------------------------\n" +
                 "Введите номер профиля для просмотра анкеты\n" +
@@ -72,16 +81,18 @@ public class FavoritesState extends BaseState {
     }
 
     private void executeNumberCommand(BotContext context) {
-        log.debug("Выполнение сценария \"Просмотр анкеты\" - (/exit)");
+        log.debug("Выполнение сценария \"Просмотр анкеты\" - (/number)");
+        state = StateType.LOOK_PROFILE;
     }
 
-    private void executeExitCommand(BotContext context) {
+    private void executeExitCommand() {
         log.debug("Выполнение сценария \"Вернуться назад\" - (/exit)");
+        state = StateType.START;
     }
 
     private enum Commands {
         HELP,
         NUMBER,
-        EXIT;
+        EXIT
     }
 }

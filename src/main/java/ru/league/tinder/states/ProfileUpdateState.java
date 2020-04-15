@@ -5,32 +5,33 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import ru.league.tinder.bot.BotContext;
 import ru.league.tinder.entity.Profile;
-import ru.league.tinder.entity.User;
 import ru.league.tinder.service.ProfileService;
-import ru.league.tinder.service.UserService;
 
 import java.util.Optional;
 
 @Component
-public class SingInState implements State, StateSendMessage {
+public class ProfileUpdateState implements State, StateSendMessage {
 
     private static final Logger log = LoggerFactory.getLogger(SingUpState.class);
 
     private StateType state;
 
-    private UserService userService;
     private ProfileService profileService;
 
-    public SingInState(UserService userService, ProfileService profileService) {
-        this.userService = userService;
+    public ProfileUpdateState(ProfileService profileService) {
         this.profileService = profileService;
     }
 
     @Override
     public void enter(BotContext context) {
         log.debug("Выполнение сценария перехода на состояние");
-        state = StateType.SING_IN;
-        sendTextMessage(context, "Сударь иль сударыня введите  логинъ  и пароль черезъ пробѣлъ:");
+        state = StateType.PROFILE_UPDATE;
+        if (context.getUser().getProfile().getSex().equalsIgnoreCase("M")) {
+            sendTextMessage(context, "Сударь, опишите себя");
+        } else {
+            sendTextMessage(context, "Сударыня, опишите себя");
+        }
+
     }
 
     @Override
@@ -53,8 +54,8 @@ public class SingInState implements State, StateSendMessage {
                 break;
             }
 
-            case AUTHORITY: {
-                executeAuthorityCommand(context);
+            case UPDATE: {
+                executeUpdateCommand(context);
                 break;
             }
 
@@ -71,43 +72,28 @@ public class SingInState implements State, StateSendMessage {
 
     private Optional<Commands> getCommand(String input) {
         try {
-            if (input.split(" ").length == 2) {
-                return Optional.of(Commands.AUTHORITY);
-            }
-
             return Optional.of(Commands.valueOf(input.toUpperCase().replaceFirst("/", "")));
         } catch (IllegalArgumentException e) {
-            log.warn("Введена некоректная команда - '{}'!", input);
-            return Optional.empty();
-        }
-    }
-
-    private void executeAuthorityCommand(BotContext context) {
-        log.debug("Выполнение сценария \"Вход\" - (/sing_in)");
-        String[] params = context.getInput().split(" ");
-        Profile profile = profileService.authority(params[0], Profile.passwordGenerator(params[0], params[1]));
-        log.debug("{}", profile);
-        if (profile != null) {
-            log.debug("Авторизация прошла успешно по name - '{}'", params[0]);
-            state = StateType.START;
-            User user = context.getUser();
-            user.setProfile(profile);
-            userService.save(user);
-            sendTextMessage(context, "Успехъ");
-        } else {
-            log.debug("Авторизация не прошла по name - '{}'", params[0]);
-            state = StateType.SING_IN;
-            sendTextMessage(context, "Неудача");
+            return Optional.of(Commands.UPDATE);
         }
     }
 
     private void executeHelpCommand(BotContext context) {
         log.debug("Выполнение сценария \"Подсказки\" - (/help)");
+        state = StateType.PROFILE_UPDATE;
         sendTextMessage(context, "Коль сударь иль сударыня заплутали:\n" +
                 "---------------------------------------\n" +
-                "сударь иль сударыня введите  логинъ  и пароль черезъ пробѣлъ:\n" +
+                "Опишите себя\n" +
                 "---------------------------------------\n" +
                 "/exit - Вернуться");
+    }
+
+    private void executeUpdateCommand(BotContext context) {
+        log.debug("Выполнение сценария \"Редактирование\" - (/update)");
+        state = StateType.PROFILE;
+        Profile profile = context.getUser().getProfile();
+        profile.setAbout(context.getInput());
+        profileService.save(profile);
     }
 
     private void executeExitCommand() {
@@ -117,8 +103,7 @@ public class SingInState implements State, StateSendMessage {
 
     private enum Commands {
         HELP,
-        AUTHORITY,
+        UPDATE,
         EXIT
     }
-
 }

@@ -8,21 +8,29 @@ import ru.league.tinder.bot.BotContext;
 import java.util.Optional;
 
 @Component
-public class LookProfileState extends BaseState {
+public class LookProfileState implements State, StateSendMessage {
 
     private static final Logger log = LoggerFactory.getLogger(LookProfileState.class);
 
+    private StateType state;
+
     @Override
-    public void of(BotContext context) {
+    public void enter(BotContext context) {
+        log.debug("Выполнение сценария перехода на состояние");
+        state = StateType.LOOK_PROFILE;
+        sendTextMessage(context, getAboutProfile(context));
+    }
+
+    @Override
+    public void handleInput(BotContext context) {
         log.debug("Обработка контекста - '{}'", context);
         Optional<Commands> inputCommand = getCommand(context.getInput());
         inputCommand.ifPresent(command -> execute(command, context));
     }
 
     @Override
-    public void enter(BotContext context) {
-        log.debug("Выполнение сценария перехода на состояние");
-        sendTextMessage(context, getAboutProfile(context));
+    public StateType getState() {
+        return state;
     }
 
     private String getAboutProfile(BotContext context) {
@@ -39,7 +47,7 @@ public class LookProfileState extends BaseState {
             }
 
             case EXIT: {
-                executeExitCommand(context);
+                executeExitCommand();
                 break;
             }
 
@@ -60,17 +68,19 @@ public class LookProfileState extends BaseState {
 
     private void executeHelpCommand(BotContext context) {
         log.debug("Выполнение сценария \"Подсказки\" - (/help)");
+        state = StateType.LOOK_PROFILE;
         sendTextMessage(context, "Коль сударь иль сударыня заплутали:\n" +
                 "/exit - Вернуться");
     }
 
 
-    private void executeExitCommand(BotContext context) {
+    private void executeExitCommand() {
         log.debug("Выполнение сценария \"Вернуться назад\" - (/exit)");
+        state = StateType.FAVORITES;
     }
 
     private enum Commands {
         HELP,
-        EXIT;
+        EXIT
     }
 }

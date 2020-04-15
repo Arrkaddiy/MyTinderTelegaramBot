@@ -5,6 +5,7 @@ import ru.league.tinder.states.StateType;
 import javax.persistence.*;
 
 @Entity
+@Table(name = "User")
 public class User {
 
     @Id
@@ -13,6 +14,9 @@ public class User {
 
     private Long chatId;
     private StateType state;
+
+    @OneToOne
+    private Profile profile;
 
     public User() {
     }
@@ -46,12 +50,25 @@ public class User {
         this.state = state;
     }
 
+    public Profile getProfile() {
+        return profile;
+    }
+
+    public void setProfile(Profile profile) {
+        this.profile = profile;
+    }
+
+    public boolean isAuthority() {
+        return profile != null;
+    }
+
     @Override
     public String toString() {
         return "User {" +
-                "id = " + id +
+                "id = " + id + '\'' +
                 ", chatId = " + chatId + '\'' +
-                ", stateType = " + state +
+                ", stateType = " + state + '\'' +
+                ", profile = " + profile + '\'' +
                 '}';
     }
 }

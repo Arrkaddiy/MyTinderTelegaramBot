@@ -1,8 +1,11 @@
 package ru.league.tinder.service;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.league.tinder.entity.Profile;
 import ru.league.tinder.repo.ProfileRepositories;
+
+import java.util.List;
 
 @Service
 public class ProfileService {
@@ -13,6 +16,17 @@ public class ProfileService {
         this.profileRepositories = profileRepositories;
     }
 
+    @Transactional(readOnly = true)
+    public List<Profile> findAll() {
+        return (List<Profile>) profileRepositories.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public Profile authority(String name, String pass) {
+        return profileRepositories.findByNameAndHashPassword(name, pass);
+    }
+
+    @Transactional
     public void save(Profile profile) {
         profileRepositories.save(profile);
     }

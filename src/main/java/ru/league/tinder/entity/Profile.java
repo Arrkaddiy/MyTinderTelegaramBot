@@ -1,12 +1,10 @@
 package ru.league.tinder.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.util.Objects;
 
 @Entity
+@Table(name = "Profile")
 public class Profile {
 
     @Id
@@ -56,19 +54,19 @@ public class Profile {
         this.about = about;
     }
 
-    private String passwordGenerator(String name, String password) {
+    public static String passwordGenerator(String name, String password) {
         return String.valueOf((Objects.hash(name) * Objects.hash(382875775))
-                + (Objects.hash(password) * Objects.hash(382875775)));
+                * (Objects.hash(password) * Objects.hash(382875775)));
     }
 
     @Override
     public String toString() {
-        return "Profile{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", hashPassword='" + hashPassword + '\'' +
-                ", sex='" + sex + '\'' +
-                ", about='" + about + '\'' +
+        return "Profile {" +
+                "id = '" + id + '\'' +
+                ", name = '" + name + '\'' +
+                ", hashPassword = '" + hashPassword + '\'' +
+                ", sex = '" + sex + '\'' +
+                ", about = '" + about + '\'' +
                 '}';
     }
 }

@@ -6,10 +6,13 @@ import org.springframework.stereotype.Controller;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import ru.league.tinder.bot.Bot;
 import ru.league.tinder.bot.BotContext;
+import ru.league.tinder.config.StateConfig;
 import ru.league.tinder.entity.User;
-import ru.league.tinder.service.StateService;
 import ru.league.tinder.service.UserService;
+import ru.league.tinder.states.State;
 import ru.league.tinder.states.StateType;
+
+import java.util.Optional;
 
 @Controller
 public class StateController {
@@ -17,11 +20,11 @@ public class StateController {
     private static final Logger log = LoggerFactory.getLogger(StateController.class);
 
     private UserService userService;
-    private StateService stateService;
+    private StateConfig stateConfig;
 
-    public StateController(UserService userService, StateService stateService) {
+    public StateController(UserService userService, StateConfig stateConfig) {
         this.userService = userService;
-        this.stateService = stateService;
+        this.stateConfig = stateConfig;
     }
 
     public void of(Bot bot, Update update) {
@@ -37,18 +40,42 @@ public class StateController {
         User user = userService.findByChatId(chatId);
         log.debug("Получен пользователь - '{}'", user);
 
+        BotContext context;
+        Optional<State> state;
+
         if (user == null) {
             user = new User(chatId, StateType.START);
             userService.save(user);
             log.debug("Сохранение нового пользователя - '{}'", user);
-            BotContext context = BotContext.of(bot, user, input);
+            context = BotContext.of(bot, user, input);
             log.debug("Получен контекст - '{}'", context);
-            stateService.getState(user.getState()).ifPresent(state -> state.enter(context));
-
+            state = stateConfig.getState(user.getState());
+            state.orElseThrow(IllegalAccessError::new).enter(context);
         } else {
-            BotContext context = BotContext.of(bot, user, input);
+            context = BotContext.of(bot, user, input);
             log.debug("Получен контекст - '{}'", context);
-            stateService.getState(user.getState()).ifPresent(state -> state.of(context));
+            state = stateConfig.getState(user.getState());
         }
+
+        log.debug("Выполнение введенной команды");
+        state.orElseThrow(IllegalAccessError::new).handleInput(context);
+
+        StateType nextState = state.orElseThrow(IllegalAccessError::new).getState();
+        log.debug("Получение следующего состояния - '{}'", nextState);
+
+        if (!nextState.equals(user.getState())) {
+            log.debug("Переход на новое состояние - '{}'", nextState);
+            saveUserState(state.orElseThrow(IllegalAccessError::new).getState(), user);
+            state = stateConfig.getState(user.getState());
+            state.orElseThrow(IllegalAccessError::new).enter(context);
+        } else {
+            log.debug("Состояние не изменнено, остаемся на - '{}'", nextState);
+        }
+    }
+
+    private void saveUserState(StateType nextState, User user) {
+        log.debug("Сохрание нового состояния пользователя - '{}'", nextState);
+        user.setState(nextState);
+        userService.save(user);
     }
 }
