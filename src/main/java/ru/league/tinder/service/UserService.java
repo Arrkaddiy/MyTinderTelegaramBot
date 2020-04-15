@@ -2,7 +2,7 @@ package ru.league.tinder.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.league.tinder.entiy.User;
+import ru.league.tinder.entity.User;
 import ru.league.tinder.repo.UserRepositories;
 
 import java.util.List;

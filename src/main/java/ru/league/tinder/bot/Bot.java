@@ -5,7 +5,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import ru.league.tinder.controller.BotController;
+import ru.league.tinder.controller.StateController;
 
 @Component
 @PropertySource("classpath:telegram.properties")
@@ -17,15 +17,15 @@ public class Bot extends TelegramLongPollingBot {
     @Value("${bot.token}")
     private String botToken;
 
-    private BotController botController;
+    private StateController stateController;
 
-    Bot(BotController botController) {
-        this.botController = botController;
+    public Bot(StateController stateController) {
+        this.stateController = stateController;
     }
 
     @Override
     public void onUpdateReceived(Update update) {
-        botController.of(this, update);
+        stateController.of(this, update);
     }
 
     @Override

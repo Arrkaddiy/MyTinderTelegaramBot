@@ -1,6 +1,6 @@
 package ru.league.tinder.bot;
 
-import ru.league.tinder.entiy.User;
+import ru.league.tinder.entity.User;
 
 public class BotContext {
 
@@ -32,9 +32,9 @@ public class BotContext {
 
     @Override
     public String toString() {
-        return "BotContext{" +
-                "user=" + user +
-                ", input='" + input + '\'' +
+        return "BotContext {" +
+                "user = '" + user + '\'' +
+                ", input= '" + input + '\'' +
                 '}';
     }
 }

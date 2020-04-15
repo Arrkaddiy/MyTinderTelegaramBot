@@ -1,9 +1,8 @@
-package ru.league.tinder.entiy;
+package ru.league.tinder.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import ru.league.tinder.states.StateType;
+
+import javax.persistence.*;
 
 @Entity
 public class User {
@@ -13,14 +12,14 @@ public class User {
     private Long id;
 
     private Long chatId;
-    private String stateId;
+    private StateType state;
 
     public User() {
     }
 
-    public User(Long chatId) {
+    public User(Long chatId, StateType state) {
         this.chatId = chatId;
-        this.stateId = "start";
+        this.state = state;
     }
 
     public Long getId() {
@@ -39,20 +38,20 @@ public class User {
         this.chatId = chatId;
     }
 
-    public String getStateId() {
-        return stateId;
+    public StateType getState() {
+        return state;
     }
 
-    public void setStateId(String stateId) {
-        this.stateId = stateId;
+    public void setState(StateType state) {
+        this.state = state;
     }
 
     @Override
     public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", chatId=" + chatId +
-                ", stateId=" + stateId +
+        return "User {" +
+                "id = " + id +
+                ", chatId = " + chatId + '\'' +
+                ", stateType = " + state +
                 '}';
     }
 }
