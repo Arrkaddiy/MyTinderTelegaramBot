@@ -18,6 +18,9 @@ public class User {
     @OneToOne
     private Profile profile;
 
+    @OneToOne
+    private Profile lastLookProfile;
+
     public User() {
     }
 
@@ -62,6 +65,14 @@ public class User {
         return profile != null;
     }
 
+    public Profile getLastLookProfile() {
+        return lastLookProfile;
+    }
+
+    public void setLastLookProfile(Profile lastLookProfile) {
+        this.lastLookProfile = lastLookProfile;
+    }
+
     @Override
     public String toString() {
         return "User {" +
@@ -69,6 +80,7 @@ public class User {
                 ", chatId = " + chatId + '\'' +
                 ", stateType = " + state + '\'' +
                 ", profile = " + profile + '\'' +
+                ", last = " + lastLookProfile + '\'' +
                 '}';
     }
 }

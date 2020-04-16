@@ -46,6 +46,10 @@ public class Profile {
         return sex;
     }
 
+    public void setSex(String sex) {
+        this.sex = sex;
+    }
+
     public String getAbout() {
         return about;
     }
@@ -60,6 +64,23 @@ public class Profile {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Profile profile = (Profile) o;
+        return id.equals(profile.id) &&
+                name.equals(profile.name) &&
+                hashPassword.equals(profile.hashPassword) &&
+                sex.equals(profile.sex) &&
+                Objects.equals(about, profile.about);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, hashPassword, sex, about);
+    }
+
+    @Override
     public String toString() {
         return "Profile {" +
                 "id = '" + id + '\'' +
@@ -67,5 +88,9 @@ public class Profile {
                 ", sex = '" + sex + '\'' +
                 ", about = '" + about + '\'' +
                 '}';
+    }
+
+    public int sort(Profile profile) {
+        return this.id.compareTo(profile.id);
     }
 }

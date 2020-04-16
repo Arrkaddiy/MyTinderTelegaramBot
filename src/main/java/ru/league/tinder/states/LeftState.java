@@ -5,30 +5,43 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.league.tinder.bot.BotContext;
+import ru.league.tinder.entity.Mach;
 import ru.league.tinder.entity.Profile;
+import ru.league.tinder.entity.User;
+import ru.league.tinder.service.MachService;
 import ru.league.tinder.service.ProfileService;
+import ru.league.tinder.service.UserService;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class LeftState implements State, StateSendMessage {
 
     private static final Logger log = LoggerFactory.getLogger(LeftState.class);
 
-    private Iterator<Profile> iterator;
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private ProfileService profileService;
 
+    @Autowired
+    private MachService machService;
+
     @Override
     public void enter(BotContext context) {
         log.debug("Выполнение сценария перехода на состояние");
-        iterator = getProfiles(context).iterator();
         Profile profile = getNextProfile(context);
+        log.debug("Получен профиль - '{}'", profile);
+        User user = context.getUser();
+        user.setLastLookProfile(profile);
+        userService.save(user);
         String text = profile.getName() + ":\n" + profile.getAbout();
+        log.debug("Получено сообщение - '{}'", text);
         sendTextMessage(context, text);
     }
 
@@ -93,14 +106,31 @@ public class LeftState implements State, StateSendMessage {
     private StateType executeLeftCommand(BotContext context) {
         log.debug("Выполнение сценария \"Следующая анкета\" - (/left)");
         Profile profile = getNextProfile(context);
+        log.debug("Получен профиль - '{}'", profile);
+        User user = context.getUser();
+        user.setLastLookProfile(profile);
+        userService.save(user);
         String text = profile.getName() + ":\n" + profile.getAbout();
+        log.debug("Получено сообщение - '{}'", text);
         sendTextMessage(context, text);
         return StateType.LEFT;
     }
 
     private StateType executeRightCommand(BotContext context) {
         log.debug("Выполнение сценария \"Подтверждения интереса\" - (/right)");
-        return StateType.START;
+        if (context.getUser().isAuthority()) {
+            Mach mach = new Mach(context.getUser().getProfile(), context.getUser().getLastLookProfile());
+            machService.save(mach);
+
+            if (machService.findAllMach(context.getUser().getLastLookProfile()).stream()
+                    .anyMatch(machFind -> machFind.getTo().equals(context.getUser().getProfile()))) {
+                sendTextMessage(context, "Вы любимы");
+            }
+        } else {
+            sendTextMessage(context, "Вы не авторизованы!");
+        }
+
+        return StateType.LEFT;
     }
 
     private StateType executeProfileCommand() {
@@ -122,15 +152,40 @@ public class LeftState implements State, StateSendMessage {
             profiles.addAll(profileService.findAll());
         }
 
-        return profiles;
+        if (profiles.size() == 0) {
+            Profile profile = new Profile("F", "Настя", "pass");
+            profile.setAbout("Бедная Настя ищет богатого купца");
+            profileService.save(profile);
+            profiles.add(profile);
+
+            profile = new Profile("M", "Антошка", "pass");
+            profile.setAbout("Антошка - король!");
+            profileService.save(profile);
+            profiles.add(profile);
+        }
+
+        return profiles.stream().sorted(Profile::sort).collect(Collectors.toList());
     }
 
     private Profile getNextProfile(BotContext context) {
-        while (iterator.hasNext()) {
-            return iterator.next();
+        List<Profile> profileList = getProfiles(context);
+        if (context.getUser().isAuthority()) {
+            profileList = profileList.stream()
+                    .filter(profile -> !profile.equals(context.getUser().getProfile()))
+                    .sorted(Profile::sort)
+                    .collect(Collectors.toList());
         }
 
-        return (iterator = getProfiles(context).iterator()).next();
+        if (context.getUser().getLastLookProfile() != null) {
+            Iterator<Profile> iterator = profileList.iterator();
+            while (iterator.hasNext()) {
+                Profile profile = iterator.next();
+                if (profile.equals(context.getUser().getLastLookProfile()) && iterator.hasNext()) {
+                    return iterator.next();
+                }
+            }
+        }
+        return profileList.get(0);
     }
 
     private enum Commands {

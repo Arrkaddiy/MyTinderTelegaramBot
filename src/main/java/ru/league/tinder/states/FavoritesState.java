@@ -2,20 +2,45 @@ package ru.league.tinder.states;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.league.tinder.bot.BotContext;
+import ru.league.tinder.entity.Mach;
+import ru.league.tinder.entity.User;
+import ru.league.tinder.service.MachService;
+import ru.league.tinder.service.UserService;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class FavoritesState implements State, StateSendMessage {
 
     private static final Logger log = LoggerFactory.getLogger(FavoritesState.class);
 
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private MachService machService;
+
     @Override
     public void enter(BotContext context) {
         log.debug("Выполнение сценария перехода на состояние");
-        sendTextMessage(context, "Любимцы:");
+        String favors = "";
+        if (context.getUser().isAuthority()) {
+            List<Mach> machList = getMach(context);
+            if (machList.size() > 0) {
+                StringBuilder stringBuilder = new StringBuilder();
+                for (int i = 0; i < machList.size(); i++) {
+                    stringBuilder.append(i + 1).append(". ").append(machList.get(i).getTo().getName()).append("\n");
+                }
+                favors = stringBuilder.toString();
+            }
+        }
+        sendTextMessage(context, "Любимцы:\n" + favors);
     }
 
     @Override
@@ -74,12 +99,28 @@ public class FavoritesState implements State, StateSendMessage {
 
     private StateType executeNumberCommand(BotContext context) {
         log.debug("Выполнение сценария \"Просмотр анкеты\" - (/number)");
-        return StateType.LOOK_PROFILE;
+        int number = Integer.parseInt(context.getInput()) - 1;
+        List<Mach> machList = getMach(context);
+        if (machList.size() > number) {
+            User user = context.getUser();
+            user.setLastLookProfile(machList.get(number).getTo());
+            userService.save(user);
+            return StateType.LOOK_PROFILE;
+        } else {
+            return StateType.FAVORITES;
+        }
     }
 
     private StateType executeExitCommand() {
         log.debug("Выполнение сценария \"Вернуться назад\" - (/exit)");
         return StateType.START;
+    }
+
+    private List<Mach> getMach(BotContext context) {
+        List<Mach> machList = machService.findAllMach(context.getUser().getProfile());
+        return machList.stream()
+                .sorted(Comparator.comparing(mach -> mach.getTo().getName()))
+                .collect(Collectors.toList());
     }
 
     private enum Commands {

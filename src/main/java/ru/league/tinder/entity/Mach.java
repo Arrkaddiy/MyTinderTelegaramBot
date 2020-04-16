@@ -11,31 +11,39 @@ public class Mach {
     private Long id;
 
     @OneToOne
-    private Profile profileFrom;
+    private Profile from;
     @OneToOne
-    private Profile profileTo;
+    private Profile to;
 
     public Mach() {
     }
 
-    public Mach(Profile profileFrom, Profile profileTo) {
-        this.profileFrom = profileFrom;
-        this.profileTo = profileTo;
+    public Mach(Profile from, Profile to) {
+        this.from = from;
+        this.to = to;
     }
 
-    public Profile getProfileFrom() {
-        return profileFrom;
+    public Profile getFrom() {
+        return from;
     }
 
-    public void setProfileFrom(Profile profileFrom) {
-        this.profileFrom = profileFrom;
+    public void setFrom(Profile from) {
+        this.from = from;
     }
 
-    public Profile getProfileTo() {
-        return profileTo;
+    public Profile getTo() {
+        return to;
     }
 
-    public void setProfileTo(Profile profileTo) {
-        this.profileTo = profileTo;
+    public void setTo(Profile to) {
+        this.to = to;
+    }
+
+    @Override
+    public String toString() {
+        return "Mach{" +
+                " from = " + from.getName() +
+                ", to = " + to.getName() +
+                '}';
     }
 }

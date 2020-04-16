@@ -15,7 +15,7 @@ public class LookProfileState implements State, StateSendMessage {
     @Override
     public void enter(BotContext context) {
         log.debug("Выполнение сценария перехода на состояние");
-        sendTextMessage(context, getAboutProfile(context));
+        sendTextMessage(context, context.getUser().getLastLookProfile().getAbout());
     }
 
     @Override
@@ -24,11 +24,6 @@ public class LookProfileState implements State, StateSendMessage {
         Commands inputCommand = getCommand(context.getInput()).orElse(Commands.HELP);
         log.debug("Определена команда - '{}'", inputCommand);
         return execute(inputCommand, context);
-    }
-
-    private String getAboutProfile(BotContext context) {
-        int profileNumber = Integer.parseInt(context.getInput());
-        return null;
     }
 
     private StateType execute(Commands command, BotContext context) {
