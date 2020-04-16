@@ -12,25 +12,18 @@ public class LookProfileState implements State, StateSendMessage {
 
     private static final Logger log = LoggerFactory.getLogger(LookProfileState.class);
 
-    private StateType state;
-
     @Override
     public void enter(BotContext context) {
         log.debug("Выполнение сценария перехода на состояние");
-        state = StateType.LOOK_PROFILE;
         sendTextMessage(context, getAboutProfile(context));
     }
 
     @Override
-    public void handleInput(BotContext context) {
+    public StateType handleInput(BotContext context) {
         log.debug("Обработка контекста - '{}'", context);
-        Optional<Commands> inputCommand = getCommand(context.getInput());
-        inputCommand.ifPresent(command -> execute(command, context));
-    }
-
-    @Override
-    public StateType getState() {
-        return state;
+        Commands inputCommand = getCommand(context.getInput()).orElse(Commands.HELP);
+        log.debug("Определена команда - '{}'", inputCommand);
+        return execute(inputCommand, context);
     }
 
     private String getAboutProfile(BotContext context) {
@@ -38,21 +31,20 @@ public class LookProfileState implements State, StateSendMessage {
         return null;
     }
 
-    private void execute(Commands command, BotContext context) {
+    private StateType execute(Commands command, BotContext context) {
         log.debug("Получена команда - '{}'. Определение сценария выполнения.", command);
         switch (command) {
             case HELP: {
-                executeHelpCommand(context);
-                break;
+                return executeHelpCommand(context);
             }
 
             case EXIT: {
-                executeExitCommand();
-                break;
+                return executeExitCommand();
             }
 
             default: {
                 log.warn("Не задано исполение для команды - '{}'!", command);
+                return StateType.LOOK_PROFILE;
             }
         }
     }
@@ -66,17 +58,17 @@ public class LookProfileState implements State, StateSendMessage {
         }
     }
 
-    private void executeHelpCommand(BotContext context) {
+    private StateType executeHelpCommand(BotContext context) {
         log.debug("Выполнение сценария \"Подсказки\" - (/help)");
-        state = StateType.LOOK_PROFILE;
         sendTextMessage(context, "Коль сударь иль сударыня заплутали:\n" +
                 "/exit - Вернуться");
+        return StateType.LOOK_PROFILE;
     }
 
 
-    private void executeExitCommand() {
+    private StateType executeExitCommand() {
         log.debug("Выполнение сценария \"Вернуться назад\" - (/exit)");
-        state = StateType.FAVORITES;
+        return StateType.FAVORITES;
     }
 
     private enum Commands {

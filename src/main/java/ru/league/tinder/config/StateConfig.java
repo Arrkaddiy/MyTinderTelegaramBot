@@ -3,12 +3,12 @@ package ru.league.tinder.config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Configuration;
 import ru.league.tinder.states.*;
 
 import java.util.Optional;
 
-@Component
+@Configuration
 public class StateConfig {
 
     private static final Logger log = LoggerFactory.getLogger(StateConfig.class);

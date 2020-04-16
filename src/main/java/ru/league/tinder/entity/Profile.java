@@ -4,7 +4,7 @@ import javax.persistence.*;
 import java.util.Objects;
 
 @Entity
-@Table(name = "Profile")
+@Table(name = "PROFILE")
 public class Profile {
 
     @Id
@@ -54,7 +54,7 @@ public class Profile {
         this.about = about;
     }
 
-    public static String passwordGenerator(String name, String password) {
+    private String passwordGenerator(String name, String password) {
         return String.valueOf((Objects.hash(name) * Objects.hash(382875775))
                 * (Objects.hash(password) * Objects.hash(382875775)));
     }
@@ -64,7 +64,6 @@ public class Profile {
         return "Profile {" +
                 "id = '" + id + '\'' +
                 ", name = '" + name + '\'' +
-                ", hashPassword = '" + hashPassword + '\'' +
                 ", sex = '" + sex + '\'' +
                 ", about = '" + about + '\'' +
                 '}';

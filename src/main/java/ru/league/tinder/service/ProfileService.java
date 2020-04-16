@@ -17,8 +17,23 @@ public class ProfileService {
     }
 
     @Transactional(readOnly = true)
+    public Profile findByName(String name) {
+        return profileRepositories.findByNameIgnoreCase(name);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isBusy(String name) {
+        return profileRepositories.findByNameIgnoreCase(name) != null;
+    }
+
+    @Transactional(readOnly = true)
     public List<Profile> findAll() {
         return (List<Profile>) profileRepositories.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Profile> findAllBySex(String sex) {
+        return profileRepositories.findAllBySex(sex);
     }
 
     @Transactional(readOnly = true)

@@ -5,7 +5,7 @@ import ru.league.tinder.states.StateType;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "User")
+@Table(name = "USER")
 public class User {
 
     @Id

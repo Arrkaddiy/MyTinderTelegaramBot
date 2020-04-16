@@ -6,8 +6,5 @@ public interface State {
 
     void enter(BotContext context);
 
-    void handleInput(BotContext context);
-
-    StateType getState();
-
+    StateType handleInput(BotContext context);
 }

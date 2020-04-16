@@ -2,6 +2,7 @@ package ru.league.tinder.states;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.league.tinder.bot.BotContext;
 import ru.league.tinder.entity.Profile;
@@ -16,62 +17,50 @@ public class SingInState implements State, StateSendMessage {
 
     private static final Logger log = LoggerFactory.getLogger(SingUpState.class);
 
-    private StateType state;
-
+    @Autowired
     private UserService userService;
+    @Autowired
     private ProfileService profileService;
-
-    public SingInState(UserService userService, ProfileService profileService) {
-        this.userService = userService;
-        this.profileService = profileService;
-    }
 
     @Override
     public void enter(BotContext context) {
         log.debug("Выполнение сценария перехода на состояние");
-        state = StateType.SING_IN;
-        sendTextMessage(context, "Сударь иль сударыня введите  логинъ  и пароль черезъ пробѣлъ:");
+        sendTextMessage(context, "Сударь иль сударыня, введите логинъ и пароль черезъ пробѣлъ:");
     }
 
     @Override
-    public void handleInput(BotContext context) {
+    public StateType handleInput(BotContext context) {
         log.debug("Обработка контекста - '{}'", context);
-        Optional<Commands> inputCommand = getCommand(context.getInput());
-        inputCommand.ifPresent(command -> execute(command, context));
+        Commands inputCommand = getCommand(context.getInput()).orElse(Commands.HELP);
+        log.debug("Определена команда - '{}'", inputCommand);
+        return execute(inputCommand, context);
     }
 
-    @Override
-    public StateType getState() {
-        return state;
-    }
-
-    private void execute(Commands command, BotContext context) {
+    private StateType execute(Commands command, BotContext context) {
         log.debug("Получена команда - '{}'. Определение сценария выполнения.", command);
         switch (command) {
             case HELP: {
-                executeHelpCommand(context);
-                break;
+                return executeHelpCommand(context);
             }
 
             case AUTHORITY: {
-                executeAuthorityCommand(context);
-                break;
+                return executeAuthorityCommand(context);
             }
 
             case EXIT: {
-                executeExitCommand();
-                break;
+                return executeExitCommand();
             }
 
             default: {
                 log.warn("Не задано исполение для команды - '{}'!", command);
+                return StateType.SING_IN;
             }
         }
     }
 
     private Optional<Commands> getCommand(String input) {
         try {
-            if (input.split(" ").length == 2) {
+            if (input.split("\\s").length == 2) {
                 return Optional.of(Commands.AUTHORITY);
             }
 
@@ -82,37 +71,47 @@ public class SingInState implements State, StateSendMessage {
         }
     }
 
-    private void executeAuthorityCommand(BotContext context) {
-        log.debug("Выполнение сценария \"Вход\" - (/sing_in)");
-        String[] params = context.getInput().split(" ");
-        Profile profile = profileService.authority(params[0], Profile.passwordGenerator(params[0], params[1]));
-        log.debug("{}", profile);
-        if (profile != null) {
-            log.debug("Авторизация прошла успешно по name - '{}'", params[0]);
-            state = StateType.START;
-            User user = context.getUser();
-            user.setProfile(profile);
-            userService.save(user);
-            sendTextMessage(context, "Успехъ");
-        } else {
-            log.debug("Авторизация не прошла по name - '{}'", params[0]);
-            state = StateType.SING_IN;
-            sendTextMessage(context, "Неудача");
-        }
-    }
-
-    private void executeHelpCommand(BotContext context) {
+    private StateType executeHelpCommand(BotContext context) {
         log.debug("Выполнение сценария \"Подсказки\" - (/help)");
         sendTextMessage(context, "Коль сударь иль сударыня заплутали:\n" +
                 "---------------------------------------\n" +
                 "сударь иль сударыня введите  логинъ  и пароль черезъ пробѣлъ:\n" +
                 "---------------------------------------\n" +
                 "/exit - Вернуться");
+        return StateType.SING_IN;
     }
 
-    private void executeExitCommand() {
+    private StateType executeAuthorityCommand(BotContext context) {
+        log.debug("Выполнение сценария \"Вход\" - (/sing_in)");
+        String[] params = context.getInput().split("\\s");
+        String name = params[0];
+        log.debug("Имя - '{}'", name);
+        String pass = params[1];
+
+        Profile profileBuf = new Profile("E", name, pass);
+        Profile profile = profileService.authority(profileBuf.getName(), profileBuf.getHashPassword());
+        log.debug("Авторизация профиля - '{}'", profile);
+
+        if (profile != null) {
+            log.debug("Авторизация прошла успешно по name - '{}'", params[0]);
+            User user = context.getUser();
+            user.setProfile(profile);
+            userService.save(user);
+            log.debug("Сохранение профиля пользователя - '{}'", user);
+
+            sendTextMessage(context, "Успехъ");
+            return StateType.LEFT;
+
+        } else {
+            log.debug("Авторизация не прошла по name - '{}'", params[0]);
+            sendTextMessage(context, "Неудача");
+            return StateType.SING_IN;
+        }
+    }
+
+    private StateType executeExitCommand() {
         log.debug("Выполнение сценария \"Вернуться назад\" - (/exit)");
-        state = StateType.PROFILE;
+        return StateType.PROFILE;
     }
 
     private enum Commands {

@@ -12,18 +12,14 @@ public class StartState implements State, StateSendMessage {
 
     private static final Logger log = LoggerFactory.getLogger(StartState.class);
 
-    private StateType state;
-
     @Override
     public void enter(BotContext context) {
         log.debug("Выполнение сценария перехода на состояние - '{}'", context.getUser().getState());
-        state = StateType.START;
         sendTextMessage(context, "Мстительный авантюрист мечтает\n" +
                 "отойти от дел в уютной усадьбе\n" +
                 "с любимой женщиной\n" +
                 "------------------------------\n" +
                 "/left - Следующая анкета\n" +
-                "/right - Подтвердить свой интерес\n" +
                 "/profile - Создание и редактирование вашей анкеты\n" +
                 "/favorites - Показать любимцев\n" +
                 "------------------------------\n" +
@@ -31,47 +27,35 @@ public class StartState implements State, StateSendMessage {
     }
 
     @Override
-    public void handleInput(BotContext context) {
+    public StateType handleInput(BotContext context) {
         log.debug("Обработка контекста - '{}'", context);
-        Optional<Commands> inputCommand = getCommand(context.getInput());
-        inputCommand.ifPresent(command -> execute(command, context));
+        Commands inputCommand = getCommand(context.getInput()).orElse(Commands.HELP);
+        log.debug("Определена команда - '{}'", inputCommand);
+        return execute(inputCommand, context);
     }
 
-    @Override
-    public StateType getState() {
-        return state;
-    }
-
-    private void execute(Commands command, BotContext context) {
+    private StateType execute(Commands command, BotContext context) {
         log.debug("Получена команда - '{}'. Определение сценария выполнения.", command);
         switch (command) {
             case HELP: {
-                executeHelpCommand(context);
-                break;
+                return executeHelpCommand(context);
             }
 
             case LEFT: {
-                executeLeftCommand(context);
-                break;
-            }
-
-            case RIGHT: {
-                executeRightCommand(context);
-                break;
+                return executeLeftCommand();
             }
 
             case PROFILE: {
-                executeProfileCommand();
-                break;
+                return executeProfileCommand();
             }
 
             case FAVORITES: {
-                executeFavoritesCommand();
-                break;
+                return executeFavoritesCommand();
             }
 
             default: {
-                log.warn("Не задано исполение для команды - '{}'!", command);
+                log.warn("Незадано исполение для команды - '{}'!", command);
+                return StateType.START;
             }
         }
     }
@@ -85,39 +69,40 @@ public class StartState implements State, StateSendMessage {
         }
     }
 
-    private void executeHelpCommand(BotContext context) {
+    private StateType executeHelpCommand(BotContext context) {
         log.debug("Выполнение сценария \"Подсказки\" - (/help)");
         sendTextMessage(context, "Коль сударь иль сударыня заплутали:\n" +
                 "/left - Следующая анкета\n" +
-                "/right - Подтвердить свой интерес\n" +
                 "/profile - Создание и редактирование вашей анкеты\n" +
                 "/favorites - Показать любимцев");
+
+        return StateType.START;
     }
 
-    private void executeLeftCommand(BotContext context) {
+    private StateType executeLeftCommand() {
         log.debug("Выполнение сценария \"Следующая анкета\" - (/left)");
-        state = StateType.START;
+        StateType state = StateType.LEFT;
+        log.debug("Переход на сдадию - '{}'", state);
+        return state;
     }
 
-    private void executeRightCommand(BotContext context) {
-        log.debug("Выполнение сценария \"Подтверждения интереса\" - (/right)");
-        state = StateType.START;
-    }
-
-    private void executeProfileCommand() {
+    private StateType executeProfileCommand() {
         log.debug("Выполнение сценария \"Анкета\" - (/profile)");
-        state = StateType.PROFILE;
+        StateType state = StateType.PROFILE;
+        log.debug("Переход на сдадию - '{}'", state);
+        return state;
     }
 
-    private void executeFavoritesCommand() {
+    private StateType executeFavoritesCommand() {
         log.debug("Выполнение сценария \"Любимцы\" - (/favorites)");
-        state = StateType.FAVORITES;
+        StateType state = StateType.FAVORITES;
+        log.debug("Переход на сдадию - '{}'", state);
+        return state;
     }
 
     private enum Commands {
         HELP,
         LEFT,
-        RIGHT,
         PROFILE,
         FAVORITES
     }

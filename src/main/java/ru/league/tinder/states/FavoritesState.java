@@ -12,47 +12,38 @@ public class FavoritesState implements State, StateSendMessage {
 
     private static final Logger log = LoggerFactory.getLogger(FavoritesState.class);
 
-    private StateType state;
-
     @Override
     public void enter(BotContext context) {
         log.debug("Выполнение сценария перехода на состояние");
-        state = StateType.FAVORITES;
         sendTextMessage(context, "Любимцы:");
     }
 
     @Override
-    public void handleInput(BotContext context) {
+    public StateType handleInput(BotContext context) {
         log.debug("Обработка контекста - '{}'", context);
-        Optional<Commands> inputCommand = getCommand(context.getInput());
-        inputCommand.ifPresent(command -> execute(command, context));
+        Commands inputCommand = getCommand(context.getInput()).orElse(Commands.HELP);
+        log.debug("Определена команда - '{}'", inputCommand);
+        return execute(inputCommand, context);
     }
 
-    @Override
-    public StateType getState() {
-        return state;
-    }
-
-    private void execute(Commands command, BotContext context) {
+    private StateType execute(Commands command, BotContext context) {
         log.debug("Получена команда - '{}'. Определение сценария выполнения.", command);
         switch (command) {
             case HELP: {
-                executeHelpCommand(context);
-                break;
+                return executeHelpCommand(context);
             }
 
             case NUMBER: {
-                executeNumberCommand(context);
-                break;
+                return executeNumberCommand(context);
             }
 
             case EXIT: {
-                executeExitCommand();
-                break;
+                return executeExitCommand();
             }
 
             default: {
                 log.warn("Не задано исполение для команды - '{}'!", command);
+                return StateType.FAVORITES;
             }
         }
     }
@@ -70,24 +61,25 @@ public class FavoritesState implements State, StateSendMessage {
         }
     }
 
-    private void executeHelpCommand(BotContext context) {
+    private StateType executeHelpCommand(BotContext context) {
         log.debug("Выполнение сценария \"Подсказки\" - (/help)");
-        state = StateType.FAVORITES;
         sendTextMessage(context, "Коль сударь иль сударыня заплутали:\n" +
                 "---------------------------------------\n" +
                 "Введите номер профиля для просмотра анкеты\n" +
                 "---------------------------------------\n" +
                 "/exit - Вернуться");
+
+        return StateType.FAVORITES;
     }
 
-    private void executeNumberCommand(BotContext context) {
+    private StateType executeNumberCommand(BotContext context) {
         log.debug("Выполнение сценария \"Просмотр анкеты\" - (/number)");
-        state = StateType.LOOK_PROFILE;
+        return StateType.LOOK_PROFILE;
     }
 
-    private void executeExitCommand() {
+    private StateType executeExitCommand() {
         log.debug("Выполнение сценария \"Вернуться назад\" - (/exit)");
-        state = StateType.START;
+        return StateType.START;
     }
 
     private enum Commands {

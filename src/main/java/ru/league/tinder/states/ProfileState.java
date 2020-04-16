@@ -2,6 +2,7 @@ package ru.league.tinder.states;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.league.tinder.bot.BotContext;
 import ru.league.tinder.entity.User;
@@ -14,18 +15,12 @@ public class ProfileState implements State, StateSendMessage {
 
     private static final Logger log = LoggerFactory.getLogger(StartState.class);
 
-    private StateType state;
-
+    @Autowired
     private UserService userService;
-
-    public ProfileState(UserService userService) {
-        this.userService = userService;
-    }
 
     @Override
     public void enter(BotContext context) {
         log.debug("Выполнение сценария перехода на состояние");
-        state = StateType.PROFILE;
         if (context.getUser().isAuthority()) {
             sendTextMessage(context, "Создание и редактирование вашей анкеты.\n" +
                     "/update - Редактирование профиля\n" +
@@ -40,52 +35,43 @@ public class ProfileState implements State, StateSendMessage {
     }
 
     @Override
-    public void handleInput(BotContext context) {
+    public StateType handleInput(BotContext context) {
         log.debug("Обработка контекста - '{}'", context);
-        Optional<Commands> inputCommand = getCommand(context.getInput());
-        inputCommand.ifPresent(command -> execute(command, context));
+        Commands inputCommand = getCommand(context.getInput()).orElse(Commands.HELP);
+        log.debug("Определена команда - '{}'", inputCommand);
+        return execute(inputCommand, context);
     }
 
-    @Override
-    public StateType getState() {
-        return state;
-    }
-
-    private void execute(Commands command, BotContext context) {
+    private StateType execute(Commands command, BotContext context) {
         log.debug("Получена команда - '{}'. Определение сценария выполнения.", command);
         switch (command) {
             case HELP: {
-                executeHelpCommand(context);
-                break;
+                return executeHelpCommand(context);
             }
 
             case UPDATE: {
-                executeUpdateCommand(context);
-                break;
+                return executeUpdateCommand(context);
             }
 
             case SING_IN: {
-                executeSingInCommand(context);
-                break;
+                return executeSingInCommand(context);
             }
 
             case SING_UP: {
-                executeSingUpCommand(context);
-                break;
+                return executeSingUpCommand(context);
             }
 
             case SING_OUT: {
-                executeSingOutCommand(context);
-                break;
+                return executeSingOutCommand(context);
             }
 
             case EXIT: {
-                executeExitCommand();
-                break;
+                return executeExitCommand();
             }
 
             default: {
                 log.warn("Не задано исполение для команды - '{}'!", command);
+                return StateType.PROFILE;
             }
         }
     }
@@ -99,9 +85,8 @@ public class ProfileState implements State, StateSendMessage {
         }
     }
 
-    private void executeHelpCommand(BotContext context) {
+    private StateType executeHelpCommand(BotContext context) {
         log.debug("Выполнение сценария \"Подсказки\" - (/help)");
-        state = StateType.PROFILE;
         if (context.getUser().isAuthority()) {
             sendTextMessage(context, "Создание и редактирование вашей анкеты.\n" +
                     "/update - Редактирование профиля\n" +
@@ -113,48 +98,52 @@ public class ProfileState implements State, StateSendMessage {
                     "/sing_up - Новая\n" +
                     "/exit - Вернуться");
         }
+
+        return StateType.PROFILE;
     }
 
-    private void executeUpdateCommand(BotContext context) {
+    private StateType executeUpdateCommand(BotContext context) {
         log.debug("Выполнение сценария \"Редактирование\" - (/update)");
         if (context.getUser().isAuthority()) {
-            state = StateType.PROFILE_UPDATE;
+            return StateType.PROFILE_UPDATE;
         } else {
-            state = StateType.PROFILE;
+            return StateType.PROFILE;
         }
     }
 
-    private void executeSingInCommand(BotContext context) {
+    private StateType executeSingInCommand(BotContext context) {
         log.debug("Выполнение сценария \"Войти\" - (/sing_In)");
         if (!context.getUser().isAuthority()) {
-            state = StateType.SING_IN;
+            return StateType.SING_IN;
         } else {
-            state = StateType.PROFILE;
+            return StateType.PROFILE;
         }
     }
 
-    private void executeSingUpCommand(BotContext context) {
+    private StateType executeSingUpCommand(BotContext context) {
         log.debug("Выполнение сценария \"Новая\" - (/sing_up)");
         if (!context.getUser().isAuthority()) {
-            state = StateType.SING_UP;
+            return StateType.SING_UP;
         } else {
-            state = StateType.PROFILE;
+            return StateType.PROFILE;
         }
     }
 
-    private void executeSingOutCommand(BotContext context) {
+    private StateType executeSingOutCommand(BotContext context) {
         log.debug("Выполнение сценария \"Выйти\" - (/sing_out)");
-        state = StateType.PROFILE;
         if (context.getUser().isAuthority()) {
             User user = context.getUser();
             user.setProfile(null);
             userService.save(user);
+            log.debug("Сохранение пользователя - '{}'", user);
         }
+
+        return StateType.PROFILE;
     }
 
-    private void executeExitCommand() {
+    private StateType executeExitCommand() {
         log.debug("Выполнение сценария \"Вернуться назад\" - (/exit)");
-        state = StateType.START;
+        return StateType.START;
     }
 
     private enum Commands {

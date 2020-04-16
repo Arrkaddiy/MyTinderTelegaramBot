@@ -2,6 +2,7 @@ package ru.league.tinder.states;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.league.tinder.bot.BotContext;
 import ru.league.tinder.entity.Profile;
@@ -16,62 +17,50 @@ public class SingUpState implements State, StateSendMessage {
 
     private static final Logger log = LoggerFactory.getLogger(SingUpState.class);
 
-    private StateType state;
-
+    @Autowired
     private UserService userService;
+    @Autowired
     private ProfileService profileService;
-
-    public SingUpState(UserService userService, ProfileService profileService) {
-        this.userService = userService;
-        this.profileService = profileService;
-    }
 
     @Override
     public void enter(BotContext context) {
         log.debug("Выполнение сценария перехода на состояние");
-        state = StateType.SING_UP;
         sendTextMessage(context, "Вы сударь иль сударыня? Как вас величать? Ваш секретный шифръ?");
     }
 
     @Override
-    public void handleInput(BotContext context) {
+    public StateType handleInput(BotContext context) {
         log.debug("Обработка контекста - '{}'", context);
-        Optional<Commands> inputCommand = getCommand(context.getInput());
-        inputCommand.ifPresent(command -> execute(command, context));
+        Commands inputCommand = getCommand(context.getInput()).orElse(Commands.HELP);
+        log.debug("Определена команда - '{}'", inputCommand);
+        return execute(inputCommand, context);
     }
 
-    @Override
-    public StateType getState() {
-        return state;
-    }
-
-    private void execute(Commands command, BotContext context) {
+    private StateType execute(Commands command, BotContext context) {
         log.debug("Получена команда - '{}'. Определение сценария выполнения.", command);
         switch (command) {
             case HELP: {
-                executeHelpCommand(context);
-                break;
+                return executeHelpCommand(context);
             }
 
             case SING_UP: {
-                executeSingUpCommand(context);
-                break;
+                return executeSingUpCommand(context);
             }
 
             case EXIT: {
-                executeExitCommand();
-                break;
+                return executeExitCommand();
             }
 
             default: {
                 log.warn("Не задано исполение для команды - '{}'!", command);
+                return StateType.SING_UP;
             }
         }
     }
 
     private Optional<Commands> getCommand(String input) {
         try {
-            if (input.split(" ").length == 3) {
+            if (input.split("\\s").length == 3) {
                 return Optional.of(Commands.SING_UP);
             }
             return Optional.of(Commands.valueOf(input.toUpperCase().replaceFirst("/", "")));
@@ -81,39 +70,62 @@ public class SingUpState implements State, StateSendMessage {
         }
     }
 
-    private void executeHelpCommand(BotContext context) {
+    private StateType executeHelpCommand(BotContext context) {
         log.debug("Выполнение сценария \"Подсказки\" - (/help)");
         sendTextMessage(context, "Коль сударь иль сударыня заплутали:\n" +
                 "---------------------------------------\n" +
                 "Вы сударь иль сударыня? Как вас величать? Ваш секретный шифръ?\n" +
                 "---------------------------------------\n" +
                 "/exit - Вернуться");
+
+        return StateType.SING_UP;
     }
 
-    private void executeSingUpCommand(BotContext context) {
+    private StateType executeSingUpCommand(BotContext context) {
         log.debug("Выполнение сценария \"Регистрация\" - (/sing_up)");
-        String[] params = context.getInput().split(" ");
-        if (params[0].equalsIgnoreCase("сударь") || params[0].equalsIgnoreCase("сударыня")) {
-            state = StateType.SING_UP;
-            Profile profile = new Profile(params[0].equalsIgnoreCase("сударь") ? "M" : "F", params[1], params[2]);
-            profileService.save(profile);
-            User user = context.getUser();
-            user.setProfile(profile);
-            userService.save(user);
-            sendTextMessage(context, "Успехъ");
-//            state = StateType.LEFT;
-            state = StateType.START;
+        String[] params = context.getInput().split("\\s");
+        String sex = params[0];
+        log.debug("Пол - '{}'", sex);
+        String name = params[1];
+        log.debug("Имя - '{}'", name);
+        String pass = params[2];
+
+        if (sex.equalsIgnoreCase("сударь") || sex.equalsIgnoreCase("сударыня")) {
+            Profile profile = new Profile(sex.equalsIgnoreCase("сударь") ? "M" : "F", name, pass);
+            log.debug("Создан новый профиль - '{}'", profile);
+            return singUp(profile, context);
+
         } else {
-            state = StateType.SING_UP;
-            sendTextMessage(context, "Неудача:\n" +
-                    "сударь Мечтательный-анархистъ д0л0йцарR");
+            log.warn("Некорректный ввод - '{}'", context.getInput());
+            sendTextMessage(context, "Неудача:\n" + "сударь МечтательныйАнархистъ д0л0йцарR");
+            return StateType.SING_UP;
         }
     }
 
+    private StateType singUp(Profile profile, BotContext context) {
+        log.debug("Попытка зарегестрировать - '{}'", profile);
+        if (!profileService.isBusy(profile.getName())) {
+            profileService.save(profile);
+            log.debug("Сохранен новый профиль - '{}'", profile);
 
-    private void executeExitCommand() {
+            User user = context.getUser();
+            user.setProfile(profile);
+            userService.save(user);
+            log.debug("Сохранение профиля под пользователем - '{}'", user);
+
+            sendTextMessage(context, "Успехъ");
+            return StateType.LEFT;
+
+        } else {
+            log.warn("Данное имя уже занято! - '{}'", profile.getName());
+            sendTextMessage(context, "Неудача");
+            return StateType.SING_UP;
+        }
+    }
+
+    private StateType executeExitCommand() {
         log.debug("Выполнение сценария \"Вернуться назад\" - (/exit)");
-        state = StateType.PROFILE;
+        return StateType.PROFILE;
     }
 
     private enum Commands {

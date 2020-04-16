@@ -12,8 +12,6 @@ import ru.league.tinder.service.UserService;
 import ru.league.tinder.states.State;
 import ru.league.tinder.states.StateType;
 
-import java.util.Optional;
-
 @Controller
 public class StateController {
 
@@ -41,33 +39,41 @@ public class StateController {
         log.debug("Получен пользователь - '{}'", user);
 
         BotContext context;
-        Optional<State> state;
+        State state;
 
         if (user == null) {
             user = new User(chatId, StateType.START);
             userService.save(user);
             log.debug("Сохранение нового пользователя - '{}'", user);
+
             context = BotContext.of(bot, user, input);
             log.debug("Получен контекст - '{}'", context);
-            state = stateConfig.getState(user.getState());
-            state.orElseThrow(IllegalAccessError::new).enter(context);
+
+            state = stateConfig.getState(user.getState()).orElseThrow(IllegalArgumentException::new);
+            log.debug("Получено состояние - '{}'", state);
+
+            state.enter(context);
+
         } else {
             context = BotContext.of(bot, user, input);
             log.debug("Получен контекст - '{}'", context);
-            state = stateConfig.getState(user.getState());
+
+            state = stateConfig.getState(user.getState()).orElseThrow(IllegalArgumentException::new);
+            log.debug("Получено состояние - '{}'", state);
         }
 
         log.debug("Выполнение введенной команды");
-        state.orElseThrow(IllegalAccessError::new).handleInput(context);
-
-        StateType nextState = state.orElseThrow(IllegalAccessError::new).getState();
-        log.debug("Получение следующего состояния - '{}'", nextState);
+        StateType nextState = state.handleInput(context);
+        log.debug("Получено следующее состояние - '{}'", nextState);
 
         if (!nextState.equals(user.getState())) {
             log.debug("Переход на новое состояние - '{}'", nextState);
-            saveUserState(state.orElseThrow(IllegalAccessError::new).getState(), user);
-            state = stateConfig.getState(user.getState());
-            state.orElseThrow(IllegalAccessError::new).enter(context);
+            saveUserState(nextState, user);
+
+            state = stateConfig.getState(user.getState()).orElseThrow(IllegalArgumentException::new);
+            log.debug("Получено состояние - '{}'", state);
+
+            state.enter(context);
         } else {
             log.debug("Состояние не изменнено, остаемся на - '{}'", nextState);
         }
