@@ -2,7 +2,6 @@ package ru.league.tinder.states;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.league.tinder.bot.BotContext;
 import ru.league.tinder.entity.Profile;
@@ -15,8 +14,11 @@ public class ProfileUpdateState implements State, StateSendMessage {
 
     private static final Logger log = LoggerFactory.getLogger(SingUpState.class);
 
-    @Autowired
     private ProfileService profileService;
+
+    public ProfileUpdateState(ProfileService profileService) {
+        this.profileService = profileService;
+    }
 
     @Override
     public void enter(BotContext context) {

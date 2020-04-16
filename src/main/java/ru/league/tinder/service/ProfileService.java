@@ -21,12 +21,6 @@ public class ProfileService {
     }
 
     @Transactional(readOnly = true)
-    public Profile findByName(String name) {
-        log.debug("Получение профиля по имени - '{}'", name);
-        return profileRepositories.findByNameIgnoreCase(name);
-    }
-
-    @Transactional(readOnly = true)
     public boolean isBusy(String name) {
         log.debug("Получение профиля по имени - '{}'", name);
         return profileRepositories.findByNameIgnoreCase(name) != null;

@@ -7,8 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.league.tinder.entity.User;
 import ru.league.tinder.repo.UserRepositories;
 
-import java.util.List;
-
 @Service
 public class UserService {
 
@@ -24,12 +22,6 @@ public class UserService {
     public User findByChatId(long chatId) {
         log.debug("Получение пользователя по Chat Id - '{}'", chatId);
         return userRepositories.findByChatId(chatId);
-    }
-
-    @Transactional(readOnly = true)
-    public List<User> findAll() {
-        log.debug("Получение всех пользователей");
-        return userRepositories.findAll();
     }
 
     @Transactional

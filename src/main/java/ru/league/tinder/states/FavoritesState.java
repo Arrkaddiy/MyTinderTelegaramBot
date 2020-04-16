@@ -2,10 +2,10 @@ package ru.league.tinder.states;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.league.tinder.bot.BotContext;
 import ru.league.tinder.entity.Mach;
+import ru.league.tinder.entity.Profile;
 import ru.league.tinder.entity.User;
 import ru.league.tinder.service.MachService;
 import ru.league.tinder.service.UserService;
@@ -20,11 +20,13 @@ public class FavoritesState implements State, StateSendMessage {
 
     private static final Logger log = LoggerFactory.getLogger(FavoritesState.class);
 
-    @Autowired
     private UserService userService;
-
-    @Autowired
     private MachService machService;
+
+    public FavoritesState(UserService userService, MachService machService) {
+        this.userService = userService;
+        this.machService = machService;
+    }
 
     @Override
     public void enter(BotContext context) {
@@ -102,8 +104,11 @@ public class FavoritesState implements State, StateSendMessage {
         int number = Integer.parseInt(context.getInput()) - 1;
         List<Mach> machList = getMach(context);
         if (machList.size() > number) {
+            Profile profile = machList.get(number).getTo();
+            log.debug("Получение интерисующего профиля - '{}'", profile);
             User user = context.getUser();
-            user.setLastLookProfile(machList.get(number).getTo());
+            user.setLastLookProfile(profile);
+            log.debug("Сохранение интерисующего профиля - '{}'", profile);
             userService.save(user);
             return StateType.LOOK_PROFILE;
         } else {
@@ -118,6 +123,7 @@ public class FavoritesState implements State, StateSendMessage {
 
     private List<Mach> getMach(BotContext context) {
         List<Mach> machList = machService.findAllMach(context.getUser().getProfile());
+        log.debug("Получение записей любимцев текущего пользователя - '{}'шт.", machList.size());
         return machList.stream()
                 .sorted(Comparator.comparing(mach -> mach.getTo().getName()))
                 .collect(Collectors.toList());
