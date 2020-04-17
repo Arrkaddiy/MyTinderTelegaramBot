@@ -31,7 +31,7 @@ public class StateConfig {
     private SingUpState singUpState;
 
     public Optional<State> getState(StateType stateType) {
-        log.debug("Получение состояния - '{}'", stateType);
+        log.debug("Получение состояния согласно типу - '{}'", stateType);
         switch (stateType) {
             case START: {
                 return Optional.of(startState);
@@ -66,6 +66,7 @@ public class StateConfig {
             }
 
             default: {
+                log.warn("Для данного типа - '{}', не найдено совподение по состоянию!", stateType);
                 return Optional.empty();
             }
         }

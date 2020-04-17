@@ -59,7 +59,7 @@ public class Profile {
     }
 
     private String passwordGenerator(String name, String password) {
-        return String.valueOf((Objects.hash(name) * Objects.hash(382875775))
+        return String.valueOf((Objects.hash(name.toUpperCase()) * Objects.hash(382875775))
                 * (Objects.hash(password) * Objects.hash(382875775)));
     }
 

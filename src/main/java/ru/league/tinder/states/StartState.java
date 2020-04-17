@@ -68,7 +68,9 @@ public class StartState implements State, StateSendMessage {
         sendTextMessage(context, "Коль сударь иль сударыня заплутали:\n" +
                 "/left - Следующая анкета\n" +
                 "/profile - Создание и редактирование вашей анкеты\n" +
-                "/favorites - Показать любимцев");
+                "/favorites - Показать любимцев\n" +
+                "--------------------------------\n" +
+                "/help - Вам в помощь");
 
         return StateType.START;
     }

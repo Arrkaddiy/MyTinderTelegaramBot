@@ -138,8 +138,8 @@ public class ProfileState implements State, StateSendMessage {
             user.setProfile(null);
             userService.save(user);
             log.debug("Сохранение пользователя - '{}'", user);
+            sendTextMessage(context, "Выход выполнен");
         }
-
         return StateType.PROFILE;
     }
 

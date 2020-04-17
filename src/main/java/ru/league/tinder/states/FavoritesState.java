@@ -105,7 +105,7 @@ public class FavoritesState implements State, StateSendMessage {
         List<Mach> machList = getMach(context);
         if (machList.size() > number) {
             Profile profile = machList.get(number).getTo();
-            log.debug("Получение интерисующего профиля - '{}'", profile);
+            log.debug("Получен интерисующий профиль - '{}'", profile);
             User user = context.getUser();
             user.setLastLookProfile(profile);
             log.debug("Сохранение интерисующего профиля - '{}'", profile);
@@ -123,7 +123,7 @@ public class FavoritesState implements State, StateSendMessage {
 
     private List<Mach> getMach(BotContext context) {
         List<Mach> machList = machService.findAllMach(context.getUser().getProfile());
-        log.debug("Получение записей любимцев текущего пользователя - '{}'шт.", machList.size());
+        log.debug("Получены записей любимцев текущего пользователя в количестве - '{}'шт.", machList.size());
         return machList.stream()
                 .sorted(Comparator.comparing(mach -> mach.getTo().getName()))
                 .collect(Collectors.toList());

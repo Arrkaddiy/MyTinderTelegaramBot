@@ -83,7 +83,7 @@ public class ProfileUpdateState implements State, StateSendMessage {
         log.debug("Выполнение сценария \"Редактирование\" - (/update)");
         Profile profile = context.getUser().getProfile();
         profile.setAbout(context.getInput());
-        log.debug("Усиановка описания профиля - '{}'", context.getInput());
+        log.debug("Установка описания профиля - '{}'", context.getInput());
 
         profileService.save(profile);
         log.debug("Сохранение профиля - '{}'", profile);

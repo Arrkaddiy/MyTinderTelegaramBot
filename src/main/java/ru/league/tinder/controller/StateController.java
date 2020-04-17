@@ -51,7 +51,7 @@ public class StateController {
 
             state = stateConfig.getState(user.getState()).orElseThrow(IllegalArgumentException::new);
             log.debug("Получено состояние - '{}'", state);
-
+            log.debug("Выполняем вход на состояние - '{}'", state);
             state.enter(context);
 
         } else {
@@ -62,17 +62,16 @@ public class StateController {
             log.debug("Получено состояние - '{}'", state);
         }
 
-        log.debug("Выполнение введенной команды");
+        log.debug("Отправка контекста - '{}', на обработку в - '{}'", context, state);
         StateType nextState = state.handleInput(context);
         log.debug("Получено следующее состояние - '{}'", nextState);
 
         if (!nextState.equals(user.getState())) {
             log.debug("Переход на новое состояние - '{}'", nextState);
             saveUserState(nextState, user);
-
             state = stateConfig.getState(user.getState()).orElseThrow(IllegalArgumentException::new);
             log.debug("Получено состояние - '{}'", state);
-
+            log.debug("Выполняем вход на состояние - '{}'", state);
             state.enter(context);
         } else {
             log.debug("Состояние не изменнено, остаемся на - '{}'", nextState);

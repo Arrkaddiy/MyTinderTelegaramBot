@@ -41,7 +41,7 @@ public class LeftState implements State, StateSendMessage {
         user.setLastLookProfile(profile);
         userService.save(user);
         String text = profile.getName() + ":\n" + profile.getAbout();
-        log.debug("Получено сообщение - '{}'", text);
+        log.debug("Получено тело сообщения - '{}'", text);
         sendTextMessage(context, text);
     }
 
@@ -164,7 +164,9 @@ public class LeftState implements State, StateSendMessage {
             profiles.add(profile);
         }
 
-        return profiles.stream().sorted(Profile::sort).collect(Collectors.toList());
+        return profiles.stream()
+                .sorted(Profile::sort)
+                .collect(Collectors.toList());
     }
 
     private Profile getNextProfile(BotContext context) {
@@ -185,6 +187,7 @@ public class LeftState implements State, StateSendMessage {
                 }
             }
         }
+
         return profileList.get(0);
     }
 
