@@ -35,14 +35,7 @@ public class LeftState implements State, StateSendMessage {
     @Override
     public void enter(BotContext context) {
         log.debug("Выполнение сценария перехода на состояние");
-        Profile profile = getNextProfile(context);
-        log.debug("Получен профиль - '{}'", profile);
-        User user = context.getUser();
-        user.setLastLookProfile(profile);
-        userService.save(user);
-        String text = profile.getName() + ":\n" + profile.getAbout();
-        log.debug("Получено тело сообщения - '{}'", text);
-        sendTextMessage(context, text);
+        sendNextProfile(context);
     }
 
     @Override
@@ -105,14 +98,7 @@ public class LeftState implements State, StateSendMessage {
 
     private StateType executeLeftCommand(BotContext context) {
         log.debug("Выполнение сценария \"Следующая анкета\" - (/left)");
-        Profile profile = getNextProfile(context);
-        log.debug("Получен профиль - '{}'", profile);
-        User user = context.getUser();
-        user.setLastLookProfile(profile);
-        userService.save(user);
-        String text = profile.getName() + ":\n" + profile.getAbout();
-        log.debug("Получено сообщение - '{}'", text);
-        sendTextMessage(context, text);
+        sendNextProfile(context);
         return StateType.LEFT;
     }
 
@@ -143,12 +129,27 @@ public class LeftState implements State, StateSendMessage {
         return StateType.FAVORITES;
     }
 
+    private void sendNextProfile(BotContext context) {
+        Profile profile = getNextProfile(context);
+        log.debug("Получен следующий профиль - '{}'", profile);
+
+        User user = context.getUser();
+        user.setLastLookProfile(profile);
+        userService.save(user);
+
+        String text = profile.getName() + ":\n" + profile.getAbout();
+        log.debug("Получено сообщение - '{}'", text);
+        sendTextMessage(context, text);
+    }
+
     private List<Profile> getProfiles(BotContext context) {
         List<Profile> profiles = new ArrayList<>();
         if (context.getUser().isAuthority()) {
+            log.debug("Получение всех профилей противоположного пола");
             String sex = context.getUser().getProfile().getSex();
             profiles.addAll(profileService.findAllBySex(sex.equals("M") ? "F" : "M"));
         } else {
+            log.debug("Получение всех профилей");
             profiles.addAll(profileService.findAll());
         }
 

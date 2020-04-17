@@ -112,6 +112,7 @@ public class FavoritesState implements State, StateSendMessage {
             userService.save(user);
             return StateType.LOOK_PROFILE;
         } else {
+            log.warn("Выбрана не существующая запись!");
             return StateType.FAVORITES;
         }
     }

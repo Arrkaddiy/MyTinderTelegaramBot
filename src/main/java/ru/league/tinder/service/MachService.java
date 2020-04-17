@@ -30,6 +30,11 @@ public class MachService {
     @Transactional
     public void save(Mach mach) {
         log.debug("Сохранение связи - '{}'", mach);
-        machRepositories.save(mach);
+        if (machRepositories.findByFromAndTo(mach.getFrom(), mach.getTo()) == null) {
+            log.debug("Существование связи - '{}' не выявлено", mach);
+            machRepositories.save(mach);
+        } else {
+            log.warn("Данная связь уже существует!");
+        }
     }
 }

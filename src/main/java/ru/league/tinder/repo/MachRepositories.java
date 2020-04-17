@@ -9,4 +9,6 @@ import java.util.List;
 public interface MachRepositories extends CrudRepository<Mach, Long> {
 
     List<Mach> findAllByFrom(Profile profile);
+
+    Mach findByFromAndTo(Profile from, Profile to);
 }
