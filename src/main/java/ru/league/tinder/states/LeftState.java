@@ -133,13 +133,16 @@ public class LeftState implements State, StateSendMessage {
         Profile profile = getNextProfile(context);
         log.debug("Получен следующий профиль - '{}'", profile);
 
-        User user = context.getUser();
-        user.setLastLookProfile(profile);
-        userService.save(user);
+        if (profile != null) {
+            User user = context.getUser();
+            user.setLastLookProfile(profile);
+            userService.save(user);
 
-        String text = profile.getName() + ":\n" + profile.getAbout();
-        log.debug("Получено сообщение - '{}'", text);
-        sendTextMessage(context, text);
+            String profileAbout = profile.getAbout();
+            String text = profile.getName() + ":\n" + (profileAbout == null ? "" : profileAbout);
+            log.debug("Получено сообщение - '{}'", text);
+            sendTextMessage(context, text);
+        }
     }
 
     private List<Profile> getProfiles(BotContext context) {
@@ -172,24 +175,27 @@ public class LeftState implements State, StateSendMessage {
 
     private Profile getNextProfile(BotContext context) {
         List<Profile> profileList = getProfiles(context);
-        if (context.getUser().isAuthority()) {
-            profileList = profileList.stream()
-                    .filter(profile -> !profile.equals(context.getUser().getProfile()))
-                    .sorted(Profile::sort)
-                    .collect(Collectors.toList());
-        }
+        log.debug("Получено количество профилей - '{}'шт.", profileList.size());
 
         if (context.getUser().getLastLookProfile() != null) {
             Iterator<Profile> iterator = profileList.iterator();
+
             while (iterator.hasNext()) {
                 Profile profile = iterator.next();
                 if (profile.equals(context.getUser().getLastLookProfile()) && iterator.hasNext()) {
                     return iterator.next();
                 }
             }
-        }
 
-        return profileList.get(0);
+            if (context.getUser().isAuthority()) {
+                return null;
+            } else {
+                return profileList.get(0);
+            }
+
+        } else {
+            return profileList.get(0);
+        }
     }
 
     private enum Commands {
