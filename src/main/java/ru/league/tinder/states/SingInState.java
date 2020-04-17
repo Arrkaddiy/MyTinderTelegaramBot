@@ -98,6 +98,7 @@ public class SingInState implements State, StateSendMessage {
             log.debug("Авторизация прошла успешно по name - '{}'", params[0]);
             User user = context.getUser();
             user.setProfile(profile);
+            user.setLastLookProfile(null);
             userService.save(user);
             log.debug("Сохранение профиля пользователя - '{}'", user);
 

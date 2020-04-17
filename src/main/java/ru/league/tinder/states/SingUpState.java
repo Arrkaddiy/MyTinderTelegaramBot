@@ -112,6 +112,7 @@ public class SingUpState implements State, StateSendMessage {
 
             User user = context.getUser();
             user.setProfile(profile);
+            user.setLastLookProfile(null);
             userService.save(user);
             log.debug("Сохранение профиля под пользователем - '{}'", user);
 
