@@ -63,7 +63,7 @@ public class StateController {
         }
 
         log.debug("Отправка контекста - '{}', на обработку в - '{}'", context, state);
-        StateType nextState = state.handleInput(context);
+        StateType nextState = state.nextState(context);
         log.debug("Получено следующее состояние - '{}'", nextState);
 
         if (!nextState.equals(user.getState())) {

@@ -19,7 +19,7 @@ public class LookProfileState implements State, StateSendMessage {
     }
 
     @Override
-    public StateType handleInput(BotContext context) {
+    public StateType nextState(BotContext context) {
         log.debug("Обработка контекста - '{}'", context);
         Commands inputCommand = getCommand(context.getInput()).orElse(Commands.HELP);
         log.debug("Определена команда - '{}'", inputCommand);
