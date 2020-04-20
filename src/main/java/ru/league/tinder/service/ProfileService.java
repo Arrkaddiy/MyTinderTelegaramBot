@@ -41,7 +41,7 @@ public class ProfileService {
     @Transactional(readOnly = true)
     public Profile authority(String name, String pass) {
         log.debug("Прохождение авторизации - '{}'", name);
-        return profileRepositories.findByNameAndHashPassword(name, pass);
+        return profileRepositories.findByNameIgnoreCaseAndHashPassword(name, pass);
     }
 
     @Transactional

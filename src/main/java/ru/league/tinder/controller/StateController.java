@@ -38,8 +38,8 @@ public class StateController {
         User user = userService.findByChatId(chatId);
         log.debug("Получен пользователь - '{}'", user);
 
-        BotContext context;
         State state;
+        BotContext context;
 
         if (user == null) {
             user = new User(chatId, StateType.START);

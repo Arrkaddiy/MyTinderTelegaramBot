@@ -3,6 +3,9 @@ package ru.league.tinder.states;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import ru.league.tinder.bot.BotContext;
 import ru.league.tinder.entity.Mach;
 import ru.league.tinder.entity.Profile;
@@ -44,6 +47,38 @@ public class LeftState implements State, StateSendMessage {
         Commands inputCommand = getCommand(context.getInput()).orElse(Commands.HELP);
         log.debug("Определена команда - '{}'", inputCommand);
         return execute(inputCommand, context);
+    }
+
+    private ReplyKeyboardMarkup getButton() {
+        ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+        keyboardMarkup.setSelective(true);
+        keyboardMarkup.setResizeKeyboard(true);
+        keyboardMarkup.setOneTimeKeyboard(false);
+
+        List<KeyboardRow> keyboardRowList = new ArrayList<>();
+        KeyboardRow keyboardRow1 = new KeyboardRow();
+        keyboardRow1.add(new KeyboardButton("/left"));
+
+        KeyboardRow keyboardRow2 = new KeyboardRow();
+        keyboardRow2.add(new KeyboardButton("/right"));
+
+        KeyboardRow keyboardRow3 = new KeyboardRow();
+        keyboardRow3.add(new KeyboardButton("/profile"));
+
+        KeyboardRow keyboardRow4 = new KeyboardRow();
+        keyboardRow4.add(new KeyboardButton("/favorites"));
+
+        KeyboardRow keyboardRow5 = new KeyboardRow();
+        keyboardRow5.add(new KeyboardButton("/help"));
+
+        keyboardRowList.add(keyboardRow1);
+        keyboardRowList.add(keyboardRow2);
+        keyboardRowList.add(keyboardRow3);
+        keyboardRowList.add(keyboardRow4);
+        keyboardRowList.add(keyboardRow5);
+
+        keyboardMarkup.setKeyboard(keyboardRowList);
+        return keyboardMarkup;
     }
 
     private StateType execute(Commands command, BotContext context) {
@@ -107,11 +142,11 @@ public class LeftState implements State, StateSendMessage {
         if (context.getUser().isAuthority()) {
             Mach mach = new Mach(context.getUser().getProfile(), context.getUser().getLastLookProfile());
             machService.save(mach);
-
             if (machService.findAllMach(context.getUser().getLastLookProfile()).stream()
                     .anyMatch(machFind -> machFind.getTo().equals(context.getUser().getProfile()))) {
                 sendTextMessage(context, "Вы любимы");
             }
+            sendNextProfile(context);
         } else {
             sendTextMessage(context, "Вы не авторизованы!");
         }
@@ -141,7 +176,7 @@ public class LeftState implements State, StateSendMessage {
             String profileAbout = profile.getAbout();
             String text = profile.getName() + ":\n" + (profileAbout == null ? "" : profileAbout);
             log.debug("Получено сообщение - '{}'", text);
-            sendTextMessage(context, text);
+            sendTextMessageWithKey(context, text, getButton());
         }
     }
 
@@ -154,18 +189,6 @@ public class LeftState implements State, StateSendMessage {
         } else {
             log.debug("Получение всех профилей");
             profiles.addAll(profileService.findAll());
-        }
-
-        if (profiles.size() == 0) {
-            Profile profile = new Profile("F", "Настя", "pass");
-            profile.setAbout("Бедная Настя ищет богатого купца");
-            profileService.save(profile);
-            profiles.add(profile);
-
-            profile = new Profile("M", "Антошка", "pass");
-            profile.setAbout("Антошка - король!");
-            profileService.save(profile);
-            profiles.add(profile);
         }
 
         return profiles.stream()

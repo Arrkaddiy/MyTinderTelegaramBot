@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface ProfileRepositories extends CrudRepository<Profile, Long> {
 
-    Profile findByNameAndHashPassword(String name, String pass);
+    Profile findByNameIgnoreCaseAndHashPassword(String name, String pass);
 
     Profile findByNameIgnoreCase(String name);
 

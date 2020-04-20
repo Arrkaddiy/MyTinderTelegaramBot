@@ -3,6 +3,9 @@ package ru.league.tinder.states;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import ru.league.tinder.bot.BotContext;
 import ru.league.tinder.entity.Mach;
 import ru.league.tinder.entity.Profile;
@@ -10,6 +13,7 @@ import ru.league.tinder.entity.User;
 import ru.league.tinder.service.MachService;
 import ru.league.tinder.service.UserService;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -42,7 +46,7 @@ public class FavoritesState implements State, StateSendMessage {
                 favors = stringBuilder.toString();
             }
         }
-        sendTextMessage(context, "Любимцы:\n" + favors);
+        sendTextMessageWithKey(context, "Любимцы:\n" + favors, getButton());
     }
 
     @Override
@@ -51,6 +55,26 @@ public class FavoritesState implements State, StateSendMessage {
         Commands inputCommand = getCommand(context.getInput()).orElse(Commands.HELP);
         log.debug("Определена команда - '{}'", inputCommand);
         return execute(inputCommand, context);
+    }
+
+    private ReplyKeyboardMarkup getButton() {
+        ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+        keyboardMarkup.setSelective(true);
+        keyboardMarkup.setResizeKeyboard(true);
+        keyboardMarkup.setOneTimeKeyboard(false);
+
+        List<KeyboardRow> keyboardRowList = new ArrayList<>();
+        KeyboardRow keyboardRow1 = new KeyboardRow();
+        keyboardRow1.add(new KeyboardButton("/exit"));
+
+        KeyboardRow keyboardRow2 = new KeyboardRow();
+        keyboardRow2.add(new KeyboardButton("/help"));
+
+        keyboardRowList.add(keyboardRow1);
+        keyboardRowList.add(keyboardRow2);
+
+        keyboardMarkup.setKeyboard(keyboardRowList);
+        return keyboardMarkup;
     }
 
     private StateType execute(Commands command, BotContext context) {

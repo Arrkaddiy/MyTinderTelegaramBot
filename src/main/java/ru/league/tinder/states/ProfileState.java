@@ -3,10 +3,15 @@ package ru.league.tinder.states;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import ru.league.tinder.bot.BotContext;
 import ru.league.tinder.entity.User;
 import ru.league.tinder.service.UserService;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -24,15 +29,15 @@ public class ProfileState implements State, StateSendMessage {
     public void enter(BotContext context) {
         log.debug("Выполнение сценария перехода на состояние");
         if (context.getUser().isAuthority()) {
-            sendTextMessage(context, "Создание и редактирование вашей анкеты.\n" +
+            sendTextMessageWithKey(context, "Создание и редактирование вашей анкеты.\n" +
                     "/update - Редактирование профиля\n" +
                     "/sing_out - Выйти\n" +
-                    "/exit - Вернуться");
+                    "/exit - Вернуться", getButtonAuthority());
         } else {
-            sendTextMessage(context, "Создание и редактирование вашей анкеты.\n" +
+            sendTextMessageWithKey(context, "Создание и редактирование вашей анкеты.\n" +
                     "/sing_in - Войти\n" +
                     "/sing_up - Новая\n" +
-                    "/exit - Вернуться");
+                    "/exit - Вернуться", getButtonNotAuthority());
         }
     }
 
@@ -76,6 +81,63 @@ public class ProfileState implements State, StateSendMessage {
                 return StateType.PROFILE;
             }
         }
+    }
+
+    private ReplyKeyboardMarkup getButtonAuthority() {
+        ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+        keyboardMarkup.setSelective(true);
+        keyboardMarkup.setResizeKeyboard(true);
+        keyboardMarkup.setOneTimeKeyboard(false);
+
+        List<KeyboardRow> keyboardRowList = new ArrayList<>();
+        KeyboardRow keyboardRow1 = new KeyboardRow();
+        keyboardRow1.add(new KeyboardButton("/update"));
+
+        KeyboardRow keyboardRow2 = new KeyboardRow();
+        keyboardRow2.add(new KeyboardButton("/sing_out"));
+
+        KeyboardRow keyboardRow3 = new KeyboardRow();
+        keyboardRow3.add(new KeyboardButton("/exit"));
+
+        KeyboardRow keyboardRow4 = new KeyboardRow();
+        keyboardRow4.add(new KeyboardButton("/help"));
+
+        keyboardRowList.add(keyboardRow1);
+        keyboardRowList.add(keyboardRow2);
+        keyboardRowList.add(keyboardRow3);
+        keyboardRowList.add(keyboardRow4);
+
+
+        keyboardMarkup.setKeyboard(keyboardRowList);
+        return keyboardMarkup;
+    }
+
+    private ReplyKeyboardMarkup getButtonNotAuthority() {
+        ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+        keyboardMarkup.setSelective(true);
+        keyboardMarkup.setResizeKeyboard(true);
+        keyboardMarkup.setOneTimeKeyboard(false);
+
+        List<KeyboardRow> keyboardRowList = new ArrayList<>();
+        KeyboardRow keyboardRow1 = new KeyboardRow();
+        keyboardRow1.add(new KeyboardButton("/sing_in"));
+
+        KeyboardRow keyboardRow2 = new KeyboardRow();
+        keyboardRow2.add(new KeyboardButton("/sing_up"));
+
+        KeyboardRow keyboardRow3 = new KeyboardRow();
+        keyboardRow3.add(new KeyboardButton("/exit"));
+
+        KeyboardRow keyboardRow4 = new KeyboardRow();
+        keyboardRow4.add(new KeyboardButton("/help"));
+
+        keyboardRowList.add(keyboardRow1);
+        keyboardRowList.add(keyboardRow2);
+        keyboardRowList.add(keyboardRow3);
+        keyboardRowList.add(keyboardRow4);
+
+        keyboardMarkup.setKeyboard(keyboardRowList);
+        return keyboardMarkup;
     }
 
     private Optional<Commands> getCommand(String input) {
@@ -138,7 +200,7 @@ public class ProfileState implements State, StateSendMessage {
             user.setProfile(null);
             userService.save(user);
             log.debug("Сохранение пользователя - '{}'", user);
-            sendTextMessage(context, "Выход выполнен");
+            sendTextMessageWithKey(context, "Выход выполнен", getButtonNotAuthority());
         }
         return StateType.PROFILE;
     }
