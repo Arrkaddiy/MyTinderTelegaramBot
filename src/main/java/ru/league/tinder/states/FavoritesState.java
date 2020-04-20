@@ -9,9 +9,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import ru.league.tinder.bot.BotContext;
 import ru.league.tinder.entity.Mach;
 import ru.league.tinder.entity.Profile;
-import ru.league.tinder.entity.User;
 import ru.league.tinder.service.MachService;
-import ru.league.tinder.service.UserService;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -24,11 +22,9 @@ public class FavoritesState implements State, StateSendMessage {
 
     private static final Logger log = LoggerFactory.getLogger(FavoritesState.class);
 
-    private UserService userService;
     private MachService machService;
 
-    public FavoritesState(UserService userService, MachService machService) {
-        this.userService = userService;
+    public FavoritesState(MachService machService) {
         this.machService = machService;
     }
 
@@ -130,15 +126,11 @@ public class FavoritesState implements State, StateSendMessage {
         if (machList.size() > number) {
             Profile profile = machList.get(number).getTo();
             log.debug("Получен интерисующий профиль - '{}'", profile);
-            User user = context.getUser();
-            user.setLastLookProfile(profile);
-            log.debug("Сохранение интерисующего профиля - '{}'", profile);
-            userService.save(user);
-            return StateType.LOOK_PROFILE;
+            sendTextMessage(context, profile.getAbout());
         } else {
             log.warn("Выбрана не существующая запись!");
-            return StateType.FAVORITES;
         }
+        return StateType.FAVORITES;
     }
 
     private StateType executeExitCommand() {
@@ -147,8 +139,18 @@ public class FavoritesState implements State, StateSendMessage {
     }
 
     private List<Mach> getMach(BotContext context) {
-        List<Mach> machList = machService.findAllMach(context.getUser().getProfile());
-        log.debug("Получены записей любимцев текущего пользователя в количестве - '{}'шт.", machList.size());
+        List<Mach> machFromList = machService.findAllMach(context.getUser().getProfile());
+        List<Mach> machToList = machService.findAllMachTo(context.getUser().getProfile());
+        List<Mach> machList = new ArrayList<>();
+
+        for (Mach mach : machFromList) {
+            if (machToList.stream().anyMatch(machTo -> mach.getFrom().equals(machTo.getTo())
+                    && mach.getTo().equals(machTo.getFrom()))) {
+                machList.add(mach);
+            }
+        }
+
+
         return machList.stream()
                 .sorted(Comparator.comparing(mach -> mach.getTo().getName()))
                 .collect(Collectors.toList());

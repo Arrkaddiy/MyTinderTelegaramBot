@@ -27,6 +27,12 @@ public class MachService {
         return machRepositories.findAllByFrom(profile);
     }
 
+    @Transactional(readOnly = true)
+    public List<Mach> findAllMachTo(Profile profile) {
+        log.debug("Получение всех связей по профилю - '{}'", profile);
+        return machRepositories.findAllByTo(profile);
+    }
+
     @Transactional
     public void save(Mach mach) {
         log.debug("Сохранение связи - '{}'", mach);
