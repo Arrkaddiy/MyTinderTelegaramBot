@@ -6,7 +6,8 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
-import ru.league.tinder.bot.BotContext;
+import ru.league.tinder.bot.RequestContext;
+import ru.league.tinder.bot.ResponseContext;
 import ru.league.tinder.entity.Profile;
 import ru.league.tinder.entity.User;
 import ru.league.tinder.service.ProfileService;
@@ -17,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
-public class SingUpState implements State, StateSendMessage {
+public class SingUpState implements State {
 
     private static final Logger log = LoggerFactory.getLogger(SingUpState.class);
 
@@ -30,13 +31,13 @@ public class SingUpState implements State, StateSendMessage {
     }
 
     @Override
-    public void enter(BotContext context) {
+    public String enter(RequestContext context) {
         log.debug("Выполнение сценария перехода на состояние");
-        sendTextMessageWithKey(context, "Вы сударь иль сударыня? Как вас величать? Ваш секретный шифръ?", getButton());
+        return "Вы сударь иль сударыня? Как вас величать? Ваш секретный шифръ?";
     }
 
     @Override
-    public StateType nextState(BotContext context) {
+    public ResponseContext nextState(RequestContext context) {
         log.debug("Обработка контекста - '{}'", context);
         Commands inputCommand = getCommand(context.getInput()).orElse(Commands.HELP);
         log.debug("Определена команда - '{}'", inputCommand);
@@ -63,7 +64,7 @@ public class SingUpState implements State, StateSendMessage {
         return keyboardMarkup;
     }
 
-    private StateType execute(Commands command, BotContext context) {
+    private ResponseContext execute(Commands command, RequestContext context) {
         log.debug("Получена команда - '{}'. Определение сценария выполнения.", command);
         switch (command) {
             case HELP: {
@@ -80,7 +81,7 @@ public class SingUpState implements State, StateSendMessage {
 
             default: {
                 log.warn("Не задано исполение для команды - '{}'!", command);
-                return StateType.SING_UP;
+                return new ResponseContext(StateType.SING_UP, "NaN");
             }
         }
     }
@@ -97,18 +98,16 @@ public class SingUpState implements State, StateSendMessage {
         }
     }
 
-    private StateType executeHelpCommand(BotContext context) {
+    private ResponseContext executeHelpCommand(RequestContext context) {
         log.debug("Выполнение сценария \"Подсказки\" - (/help)");
-        sendTextMessage(context, "Коль сударь иль сударыня заплутали:\n" +
+        return new ResponseContext(StateType.SING_UP, "Коль сударь иль сударыня заплутали:\n" +
                 "---------------------------------------\n" +
                 "Вы сударь иль сударыня? Как вас величать? Ваш секретный шифръ?\n" +
                 "---------------------------------------\n" +
                 "/exit - Вернуться");
-
-        return StateType.SING_UP;
     }
 
-    private StateType executeSingUpCommand(BotContext context) {
+    private ResponseContext executeSingUpCommand(RequestContext context) {
         log.debug("Выполнение сценария \"Регистрация\" - (/sing_up)");
         String[] params = context.getInput().split("\\s");
         String sex = params[0];
@@ -124,12 +123,11 @@ public class SingUpState implements State, StateSendMessage {
 
         } else {
             log.warn("Некорректный ввод - '{}'", context.getInput());
-            sendTextMessage(context, "Неудача:\n" + "сударь МечтательныйАнархистъ д0л0йцарR");
-            return StateType.SING_UP;
+            return new ResponseContext(StateType.SING_UP, "Неудача:\n" + "сударь МечтательныйАнархистъ д0л0йцарR");
         }
     }
 
-    private StateType singUp(Profile profile, BotContext context) {
+    private ResponseContext singUp(Profile profile, RequestContext context) {
         log.debug("Попытка зарегестрировать - '{}'", profile);
         if (!profileService.isBusy(profile.getName())) {
             profileService.save(profile);
@@ -140,20 +138,17 @@ public class SingUpState implements State, StateSendMessage {
             user.setLastLookProfile(null);
             userService.save(user);
             log.debug("Сохранение профиля под пользователем - '{}'", user);
-
-            sendTextMessage(context, "Успехъ");
-            return StateType.LEFT;
+            return new ResponseContext(StateType.LEFT, "Успехъ");
 
         } else {
             log.warn("Данное имя уже занято! - '{}'", profile.getName());
-            sendTextMessage(context, "Неудача");
-            return StateType.SING_UP;
+            return new ResponseContext(StateType.SING_UP, "Неудача");
         }
     }
 
-    private StateType executeExitCommand() {
+    private ResponseContext executeExitCommand() {
         log.debug("Выполнение сценария \"Вернуться назад\" - (/exit)");
-        return StateType.PROFILE;
+        return new ResponseContext(StateType.PROFILE, "Nan");
     }
 
     private enum Commands {

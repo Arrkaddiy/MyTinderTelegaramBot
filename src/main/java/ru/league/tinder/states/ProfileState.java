@@ -6,7 +6,8 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
-import ru.league.tinder.bot.BotContext;
+import ru.league.tinder.bot.RequestContext;
+import ru.league.tinder.bot.ResponseContext;
 import ru.league.tinder.entity.User;
 import ru.league.tinder.service.UserService;
 
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
-public class ProfileState implements State, StateSendMessage {
+public class ProfileState implements State {
 
     private static final Logger log = LoggerFactory.getLogger(StartState.class);
 
@@ -26,30 +27,30 @@ public class ProfileState implements State, StateSendMessage {
     }
 
     @Override
-    public void enter(BotContext context) {
+    public String enter(RequestContext context) {
         log.debug("Выполнение сценария перехода на состояние");
         if (context.getUser().isAuthority()) {
-            sendTextMessageWithKey(context, "Создание и редактирование вашей анкеты.\n" +
+            return "Создание и редактирование вашей анкеты.\n" +
                     "/update - Редактирование профиля\n" +
                     "/sing_out - Выйти\n" +
-                    "/exit - Вернуться", getButtonAuthority());
+                    "/exit - Вернуться";
         } else {
-            sendTextMessageWithKey(context, "Создание и редактирование вашей анкеты.\n" +
+            return "Создание и редактирование вашей анкеты.\n" +
                     "/sing_in - Войти\n" +
                     "/sing_up - Новая\n" +
-                    "/exit - Вернуться", getButtonNotAuthority());
+                    "/exit - Вернуться";
         }
     }
 
     @Override
-    public StateType nextState(BotContext context) {
+    public ResponseContext nextState(RequestContext context) {
         log.debug("Обработка контекста - '{}'", context);
         Commands inputCommand = getCommand(context.getInput()).orElse(Commands.HELP);
         log.debug("Определена команда - '{}'", inputCommand);
         return execute(inputCommand, context);
     }
 
-    private StateType execute(Commands command, BotContext context) {
+    private ResponseContext execute(Commands command, RequestContext context) {
         log.debug("Получена команда - '{}'. Определение сценария выполнения.", command);
         switch (command) {
             case HELP: {
@@ -78,7 +79,7 @@ public class ProfileState implements State, StateSendMessage {
 
             default: {
                 log.warn("Не задано исполение для команды - '{}'!", command);
-                return StateType.PROFILE;
+                return new ResponseContext(StateType.PROFILE, "NaN");
             }
         }
     }
@@ -149,51 +150,52 @@ public class ProfileState implements State, StateSendMessage {
         }
     }
 
-    private StateType executeHelpCommand(BotContext context) {
+    private ResponseContext executeHelpCommand(RequestContext context) {
         log.debug("Выполнение сценария \"Подсказки\" - (/help)");
+        String answer;
         if (context.getUser().isAuthority()) {
-            sendTextMessage(context, "Создание и редактирование вашей анкеты.\n" +
+            answer = "Создание и редактирование вашей анкеты.\n" +
                     "/update - Редактирование профиля\n" +
                     "/sing_out - Выйти\n" +
-                    "/exit - Вернуться");
+                    "/exit - Вернуться";
         } else {
-            sendTextMessage(context, "Создание и редактирование вашей анкеты.\n" +
+            answer = "Создание и редактирование вашей анкеты.\n" +
                     "/sing_in - Войти\n" +
                     "/sing_up - Новая\n" +
-                    "/exit - Вернуться");
+                    "/exit - Вернуться";
         }
 
-        return StateType.PROFILE;
+        return new ResponseContext(StateType.PROFILE, answer);
     }
 
-    private StateType executeUpdateCommand(BotContext context) {
+    private ResponseContext executeUpdateCommand(RequestContext context) {
         log.debug("Выполнение сценария \"Редактирование\" - (/update)");
         if (context.getUser().isAuthority()) {
-            return StateType.PROFILE_UPDATE;
+            return new ResponseContext(StateType.PROFILE_UPDATE, "NaN");
         } else {
-            return StateType.PROFILE;
+            return new ResponseContext(StateType.PROFILE, "NaN");
         }
     }
 
-    private StateType executeSingInCommand(BotContext context) {
+    private ResponseContext executeSingInCommand(RequestContext context) {
         log.debug("Выполнение сценария \"Войти\" - (/sing_In)");
         if (!context.getUser().isAuthority()) {
-            return StateType.SING_IN;
+            return new ResponseContext(StateType.SING_IN, "NaN");
         } else {
-            return StateType.PROFILE;
+            return new ResponseContext(StateType.PROFILE, "NaN");
         }
     }
 
-    private StateType executeSingUpCommand(BotContext context) {
+    private ResponseContext executeSingUpCommand(RequestContext context) {
         log.debug("Выполнение сценария \"Новая\" - (/sing_up)");
         if (!context.getUser().isAuthority()) {
-            return StateType.SING_UP;
+            return new ResponseContext(StateType.SING_UP, "NaN");
         } else {
-            return StateType.PROFILE;
+            return new ResponseContext(StateType.PROFILE, "NaN");
         }
     }
 
-    private StateType executeSingOutCommand(BotContext context) {
+    private ResponseContext executeSingOutCommand(RequestContext context) {
         log.debug("Выполнение сценария \"Выйти\" - (/sing_out)");
         if (context.getUser().isAuthority()) {
             User user = context.getUser();
@@ -201,14 +203,13 @@ public class ProfileState implements State, StateSendMessage {
             user.setLastLookProfile(null);
             userService.save(user);
             log.debug("Сохранение пользователя - '{}'", user);
-            sendTextMessageWithKey(context, "Выход выполнен", getButtonNotAuthority());
         }
-        return StateType.PROFILE;
+        return new ResponseContext(StateType.PROFILE, "Выход выполнен");
     }
 
-    private StateType executeExitCommand() {
+    private ResponseContext executeExitCommand() {
         log.debug("Выполнение сценария \"Вернуться назад\" - (/exit)");
-        return StateType.START;
+        return new ResponseContext(StateType.START, "NaN");
     }
 
     private enum Commands {

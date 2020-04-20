@@ -1,10 +1,11 @@
 package ru.league.tinder.states;
 
-import ru.league.tinder.bot.BotContext;
+import ru.league.tinder.bot.RequestContext;
+import ru.league.tinder.bot.ResponseContext;
 
 public interface State {
 
-    void enter(BotContext context);
+    String enter(RequestContext context);
 
-    StateType nextState(BotContext context);
+    ResponseContext nextState(RequestContext context);
 }

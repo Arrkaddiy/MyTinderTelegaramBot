@@ -6,7 +6,8 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
-import ru.league.tinder.bot.BotContext;
+import ru.league.tinder.bot.RequestContext;
+import ru.league.tinder.bot.ResponseContext;
 import ru.league.tinder.entity.Mach;
 import ru.league.tinder.entity.Profile;
 import ru.league.tinder.entity.User;
@@ -21,7 +22,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
-public class LeftState implements State, StateSendMessage {
+public class LeftState implements State {
 
     private static final Logger log = LoggerFactory.getLogger(LeftState.class);
 
@@ -36,13 +37,13 @@ public class LeftState implements State, StateSendMessage {
     }
 
     @Override
-    public void enter(BotContext context) {
+    public String enter(RequestContext context) {
         log.debug("Выполнение сценария перехода на состояние");
-        sendNextProfile(context);
+        return sendNextProfile(context);
     }
 
     @Override
-    public StateType nextState(BotContext context) {
+    public ResponseContext nextState(RequestContext context) {
         log.debug("Обработка контекста - '{}'", context);
         Commands inputCommand = getCommand(context.getInput()).orElse(Commands.HELP);
         log.debug("Определена команда - '{}'", inputCommand);
@@ -81,7 +82,7 @@ public class LeftState implements State, StateSendMessage {
         return keyboardMarkup;
     }
 
-    private StateType execute(Commands command, BotContext context) {
+    private ResponseContext execute(Commands command, RequestContext context) {
         log.debug("Получена команда - '{}'. Определение сценария выполнения.", command);
         switch (command) {
             case HELP: {
@@ -106,7 +107,7 @@ public class LeftState implements State, StateSendMessage {
 
             default: {
                 log.warn("Не задано исполение для команды - '{}'!", command);
-                return StateType.LEFT;
+                return new ResponseContext(StateType.LEFT, "NaN");
             }
         }
     }
@@ -120,25 +121,23 @@ public class LeftState implements State, StateSendMessage {
         }
     }
 
-    private StateType executeHelpCommand(BotContext context) {
+    private ResponseContext executeHelpCommand(RequestContext context) {
         log.debug("Выполнение сценария \"Подсказки\" - (/help)");
-        sendTextMessage(context, "Коль сударь иль сударыня заплутали:\n" +
+        return new ResponseContext(StateType.LEFT, "Коль сударь иль сударыня заплутали:\n" +
                 "/left - Следующая анкета\n" +
                 "/right - Подтвердить свой интерес\n" +
                 "/profile - Создание и редактирование вашей анкеты\n" +
                 "/favorites - Показать любимцев");
-
-        return StateType.LEFT;
     }
 
-    private StateType executeLeftCommand(BotContext context) {
+    private ResponseContext executeLeftCommand(RequestContext context) {
         log.debug("Выполнение сценария \"Следующая анкета\" - (/left)");
-        sendNextProfile(context);
-        return StateType.LEFT;
+        return new ResponseContext(StateType.LEFT, sendNextProfile(context));
     }
 
-    private StateType executeRightCommand(BotContext context) {
+    private ResponseContext executeRightCommand(RequestContext context) {
         log.debug("Выполнение сценария \"Подтверждения интереса\" - (/right)");
+        String answer = null;
 
         if (context.getUser().isAuthority()) {
             if (context.getUser().getLastLookProfile() != null) {
@@ -146,31 +145,31 @@ public class LeftState implements State, StateSendMessage {
                 machService.save(mach);
                 if (machService.findAllMach(context.getUser().getLastLookProfile()).stream()
                         .anyMatch(machFind -> machFind.getTo().equals(context.getUser().getProfile()))) {
-                    sendTextMessage(context, "Вы любимы");
+                    return new ResponseContext(StateType.LEFT, "Вы любимы");
                 }
-                sendNextProfile(context);
+                answer = sendNextProfile(context);
             } else {
                 log.warn("Анкета не выбрана!");
             }
 
         } else {
-            sendTextMessage(context, "Вы не авторизованы!");
+            answer = "Вы не авторизованы!";
         }
 
-        return StateType.LEFT;
+        return new ResponseContext(StateType.LEFT, answer);
     }
 
-    private StateType executeProfileCommand() {
+    private ResponseContext executeProfileCommand() {
         log.debug("Выполнение сценария \"Анкета\" - (/profile)");
-        return StateType.PROFILE;
+        return new ResponseContext(StateType.PROFILE, "NaN");
     }
 
-    private StateType executeFavoritesCommand() {
+    private ResponseContext executeFavoritesCommand() {
         log.debug("Выполнение сценария \"Любимцы\" - (/favorites)");
-        return StateType.FAVORITES;
+        return new ResponseContext(StateType.FAVORITES, "NaN");
     }
 
-    private void sendNextProfile(BotContext context) {
+    private String sendNextProfile(RequestContext context) {
         Profile profile = getNextProfile(context);
         log.debug("Получен следующий профиль - '{}'", profile);
 
@@ -186,10 +185,10 @@ public class LeftState implements State, StateSendMessage {
             log.debug("Получено сообщение - '{}'", text);
         }
 
-        sendTextMessageWithKey(context, text, getButton());
+        return text;
     }
 
-    private List<Profile> getProfiles(BotContext context) {
+    private List<Profile> getProfiles(RequestContext context) {
         List<Profile> profiles = new ArrayList<>();
         if (context.getUser().isAuthority()) {
             log.debug("Получение всех профилей противоположного пола");
@@ -205,7 +204,7 @@ public class LeftState implements State, StateSendMessage {
                 .collect(Collectors.toList());
     }
 
-    private Profile getNextProfile(BotContext context) {
+    private Profile getNextProfile(RequestContext context) {
         List<Profile> profileList = getProfiles(context);
         log.debug("Получено количество профилей - '{}'шт.", profileList.size());
 

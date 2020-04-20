@@ -24,8 +24,6 @@ public class StateConfig {
     @Autowired
     private FavoritesState favoritesState;
     @Autowired
-    private LookProfileState lookProfileState;
-    @Autowired
     private SingInState singInState;
     @Autowired
     private SingUpState singUpState;
@@ -53,9 +51,6 @@ public class StateConfig {
                 return Optional.of(favoritesState);
             }
 
-            case LOOK_PROFILE: {
-                return Optional.of(lookProfileState);
-            }
 
             case SING_IN: {
                 return Optional.of(singInState);

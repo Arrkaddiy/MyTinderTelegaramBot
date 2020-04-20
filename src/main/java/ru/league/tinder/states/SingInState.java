@@ -6,7 +6,8 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
-import ru.league.tinder.bot.BotContext;
+import ru.league.tinder.bot.RequestContext;
+import ru.league.tinder.bot.ResponseContext;
 import ru.league.tinder.entity.Profile;
 import ru.league.tinder.entity.User;
 import ru.league.tinder.service.ProfileService;
@@ -17,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
-public class SingInState implements State, StateSendMessage {
+public class SingInState implements State {
 
     private static final Logger log = LoggerFactory.getLogger(SingUpState.class);
 
@@ -30,13 +31,13 @@ public class SingInState implements State, StateSendMessage {
     }
 
     @Override
-    public void enter(BotContext context) {
+    public String enter(RequestContext context) {
         log.debug("Выполнение сценария перехода на состояние");
-        sendTextMessageWithKey(context, "Сударь иль сударыня, введите логинъ и пароль черезъ пробѣлъ:", getButton());
+        return "Сударь иль сударыня, введите логинъ и пароль черезъ пробѣлъ:";
     }
 
     @Override
-    public StateType nextState(BotContext context) {
+    public ResponseContext nextState(RequestContext context) {
         log.debug("Обработка контекста - '{}'", context);
         Commands inputCommand = getCommand(context.getInput()).orElse(Commands.HELP);
         log.debug("Определена команда - '{}'", inputCommand);
@@ -63,11 +64,11 @@ public class SingInState implements State, StateSendMessage {
         return keyboardMarkup;
     }
 
-    private StateType execute(Commands command, BotContext context) {
+    private ResponseContext execute(Commands command, RequestContext context) {
         log.debug("Получена команда - '{}'. Определение сценария выполнения.", command);
         switch (command) {
             case HELP: {
-                return executeHelpCommand(context);
+                return executeHelpCommand();
             }
 
             case AUTHORITY: {
@@ -80,7 +81,7 @@ public class SingInState implements State, StateSendMessage {
 
             default: {
                 log.warn("Не задано исполение для команды - '{}'!", command);
-                return StateType.SING_IN;
+                return new ResponseContext(StateType.SING_IN, "NaN");
             }
         }
     }
@@ -98,17 +99,16 @@ public class SingInState implements State, StateSendMessage {
         }
     }
 
-    private StateType executeHelpCommand(BotContext context) {
+    private ResponseContext executeHelpCommand() {
         log.debug("Выполнение сценария \"Подсказки\" - (/help)");
-        sendTextMessage(context, "Коль сударь иль сударыня заплутали:\n" +
+        return new ResponseContext(StateType.SING_IN, "Коль сударь иль сударыня заплутали:\n" +
                 "---------------------------------------\n" +
                 "сударь иль сударыня введите  логинъ  и пароль черезъ пробѣлъ:\n" +
                 "---------------------------------------\n" +
                 "/exit - Вернуться");
-        return StateType.SING_IN;
     }
 
-    private StateType executeAuthorityCommand(BotContext context) {
+    private ResponseContext executeAuthorityCommand(RequestContext context) {
         log.debug("Выполнение сценария \"Вход\" - (/sing_in)");
         String[] params = context.getInput().split("\\s");
         String name = params[0];
@@ -127,19 +127,17 @@ public class SingInState implements State, StateSendMessage {
             userService.save(user);
             log.debug("Сохранение профиля пользователя - '{}'", user);
 
-            sendTextMessage(context, "Успехъ");
-            return StateType.LEFT;
+            return new ResponseContext(StateType.LEFT, "Успехъ");
 
         } else {
             log.debug("Авторизация не прошла по name - '{}'", params[0]);
-            sendTextMessage(context, "Неудача");
-            return StateType.SING_IN;
+            return new ResponseContext(StateType.SING_IN, "Неудача");
         }
     }
 
-    private StateType executeExitCommand() {
+    private ResponseContext executeExitCommand() {
         log.debug("Выполнение сценария \"Вернуться назад\" - (/exit)");
-        return StateType.PROFILE;
+        return new ResponseContext(StateType.PROFILE, "NaN");
     }
 
     private enum Commands {

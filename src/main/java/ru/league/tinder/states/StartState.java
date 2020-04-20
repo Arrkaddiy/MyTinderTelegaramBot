@@ -6,28 +6,28 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
-import ru.league.tinder.bot.BotContext;
+import ru.league.tinder.bot.RequestContext;
+import ru.league.tinder.bot.ResponseContext;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Component
-public class StartState implements State, StateSendMessage {
+public class StartState implements State {
 
     private static final Logger log = LoggerFactory.getLogger(StartState.class);
 
     @Override
-    public void enter(BotContext context) {
+    public String enter(RequestContext context) {
         log.debug("Выполнение сценария перехода на состояние - '{}'", context.getUser().getState());
-        sendTextMessageWithKey(context, "Мстительный авантюрист мечтает\n" +
+        return "Мстительный авантюрист мечтает\n" +
                 "отойти от дел в уютной усадьбе\n" +
-                "с любимой женщиной", getButton());
-
+                "с любимой женщиной";
     }
 
     @Override
-    public StateType nextState(BotContext context) {
+    public ResponseContext nextState(RequestContext context) {
         log.debug("Обработка контекста - '{}'", context);
         Commands inputCommand = getCommand(context.getInput()).orElse(Commands.HELP);
         log.debug("Определена команда - '{}'", inputCommand);
@@ -62,7 +62,7 @@ public class StartState implements State, StateSendMessage {
         return keyboardMarkup;
     }
 
-    private StateType execute(Commands command, BotContext context) {
+    private ResponseContext execute(Commands command, RequestContext context) {
         log.debug("Получена команда - '{}'. Определение сценария выполнения.", command);
         switch (command) {
             case HELP: {
@@ -83,7 +83,7 @@ public class StartState implements State, StateSendMessage {
 
             default: {
                 log.warn("Незадано исполение для команды - '{}'!", command);
-                return StateType.START;
+                return new ResponseContext(StateType.START, "NaN");
             }
         }
     }
@@ -97,37 +97,35 @@ public class StartState implements State, StateSendMessage {
         }
     }
 
-    private StateType executeHelpCommand(BotContext context) {
+    private ResponseContext executeHelpCommand(RequestContext context) {
         log.debug("Выполнение сценария \"Подсказки\" - (/help)");
-        sendTextMessage(context, "Коль сударь иль сударыня заплутали:\n" +
+        return new ResponseContext(StateType.START, "Коль сударь иль сударыня заплутали:\n" +
                 "/left - Следующая анкета\n" +
                 "/profile - Создание и редактирование вашей анкеты\n" +
                 "/favorites - Показать любимцев\n" +
                 "--------------------------------\n" +
                 "/help - Вам в помощь");
-
-        return StateType.START;
     }
 
-    private StateType executeLeftCommand() {
+    private ResponseContext executeLeftCommand() {
         log.debug("Выполнение сценария \"Следующая анкета\" - (/left)");
         StateType state = StateType.LEFT;
         log.debug("Переход на сдадию - '{}'", state);
-        return state;
+        return new ResponseContext(state, "NaN");
     }
 
-    private StateType executeProfileCommand() {
+    private ResponseContext executeProfileCommand() {
         log.debug("Выполнение сценария \"Анкета\" - (/profile)");
         StateType state = StateType.PROFILE;
         log.debug("Переход на сдадию - '{}'", state);
-        return state;
+        return new ResponseContext(state, "NaN");
     }
 
-    private StateType executeFavoritesCommand() {
+    private ResponseContext executeFavoritesCommand() {
         log.debug("Выполнение сценария \"Любимцы\" - (/favorites)");
         StateType state = StateType.FAVORITES;
         log.debug("Переход на сдадию - '{}'", state);
-        return state;
+        return new ResponseContext(state, "NaN");
     }
 
     private enum Commands {

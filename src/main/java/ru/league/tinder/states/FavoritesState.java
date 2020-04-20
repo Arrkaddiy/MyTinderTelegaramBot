@@ -6,7 +6,8 @@ import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
-import ru.league.tinder.bot.BotContext;
+import ru.league.tinder.bot.RequestContext;
+import ru.league.tinder.bot.ResponseContext;
 import ru.league.tinder.entity.Mach;
 import ru.league.tinder.entity.Profile;
 import ru.league.tinder.service.MachService;
@@ -18,7 +19,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
-public class FavoritesState implements State, StateSendMessage {
+public class FavoritesState implements State {
 
     private static final Logger log = LoggerFactory.getLogger(FavoritesState.class);
 
@@ -29,7 +30,7 @@ public class FavoritesState implements State, StateSendMessage {
     }
 
     @Override
-    public void enter(BotContext context) {
+    public String enter(RequestContext context) {
         log.debug("Выполнение сценария перехода на состояние");
         String favors = "";
         if (context.getUser().isAuthority()) {
@@ -42,11 +43,11 @@ public class FavoritesState implements State, StateSendMessage {
                 favors = stringBuilder.toString();
             }
         }
-        sendTextMessageWithKey(context, "Любимцы:\n" + favors, getButton());
+        return "Любимцы:\n" + favors;
     }
 
     @Override
-    public StateType nextState(BotContext context) {
+    public ResponseContext nextState(RequestContext context) {
         log.debug("Обработка контекста - '{}'", context);
         Commands inputCommand = getCommand(context.getInput()).orElse(Commands.HELP);
         log.debug("Определена команда - '{}'", inputCommand);
@@ -73,7 +74,7 @@ public class FavoritesState implements State, StateSendMessage {
         return keyboardMarkup;
     }
 
-    private StateType execute(Commands command, BotContext context) {
+    private ResponseContext execute(Commands command, RequestContext context) {
         log.debug("Получена команда - '{}'. Определение сценария выполнения.", command);
         switch (command) {
             case HELP: {
@@ -90,7 +91,7 @@ public class FavoritesState implements State, StateSendMessage {
 
             default: {
                 log.warn("Не задано исполение для команды - '{}'!", command);
-                return StateType.FAVORITES;
+                return new ResponseContext(StateType.FAVORITES, "NaN");
             }
         }
     }
@@ -108,37 +109,37 @@ public class FavoritesState implements State, StateSendMessage {
         }
     }
 
-    private StateType executeHelpCommand(BotContext context) {
+    private ResponseContext executeHelpCommand(RequestContext context) {
         log.debug("Выполнение сценария \"Подсказки\" - (/help)");
-        sendTextMessage(context, "Коль сударь иль сударыня заплутали:\n" +
+        return new ResponseContext(StateType.FAVORITES, "Коль сударь иль сударыня заплутали:\n" +
                 "---------------------------------------\n" +
                 "Введите номер профиля для просмотра анкеты\n" +
                 "---------------------------------------\n" +
                 "/exit - Вернуться");
-
-        return StateType.FAVORITES;
     }
 
-    private StateType executeNumberCommand(BotContext context) {
+    private ResponseContext executeNumberCommand(RequestContext context) {
         log.debug("Выполнение сценария \"Просмотр анкеты\" - (/number)");
         int number = Integer.parseInt(context.getInput()) - 1;
         List<Mach> machList = getMach(context);
+        String answer;
         if (machList.size() > number) {
             Profile profile = machList.get(number).getTo();
             log.debug("Получен интерисующий профиль - '{}'", profile);
-            sendTextMessage(context, profile.getAbout());
+            answer = profile.getAbout();
         } else {
             log.warn("Выбрана не существующая запись!");
+            answer = "NaN";
         }
-        return StateType.FAVORITES;
+        return new ResponseContext(StateType.FAVORITES, answer);
     }
 
-    private StateType executeExitCommand() {
+    private ResponseContext executeExitCommand() {
         log.debug("Выполнение сценария \"Вернуться назад\" - (/exit)");
-        return StateType.START;
+        return new ResponseContext(StateType.START, "NaN");
     }
 
-    private List<Mach> getMach(BotContext context) {
+    private List<Mach> getMach(RequestContext context) {
         List<Mach> machFromList = machService.findAllMach(context.getUser().getProfile());
         List<Mach> machToList = machService.findAllMachTo(context.getUser().getProfile());
         List<Mach> machList = new ArrayList<>();
