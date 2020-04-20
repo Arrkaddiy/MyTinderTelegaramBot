@@ -143,6 +143,7 @@ public class SingInState implements State, StateSendMessage {
     }
 
     private enum Commands {
+        START,
         HELP,
         AUTHORITY,
         EXIT

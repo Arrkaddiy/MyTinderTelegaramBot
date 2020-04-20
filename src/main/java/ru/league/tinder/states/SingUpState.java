@@ -157,6 +157,7 @@ public class SingUpState implements State, StateSendMessage {
     }
 
     private enum Commands {
+        START,
         HELP,
         SING_UP,
         EXIT

@@ -139,14 +139,20 @@ public class LeftState implements State, StateSendMessage {
 
     private StateType executeRightCommand(BotContext context) {
         log.debug("Выполнение сценария \"Подтверждения интереса\" - (/right)");
+
         if (context.getUser().isAuthority()) {
-            Mach mach = new Mach(context.getUser().getProfile(), context.getUser().getLastLookProfile());
-            machService.save(mach);
-            if (machService.findAllMach(context.getUser().getLastLookProfile()).stream()
-                    .anyMatch(machFind -> machFind.getTo().equals(context.getUser().getProfile()))) {
-                sendTextMessage(context, "Вы любимы");
+            if (context.getUser().getLastLookProfile() != null) {
+                Mach mach = new Mach(context.getUser().getProfile(), context.getUser().getLastLookProfile());
+                machService.save(mach);
+                if (machService.findAllMach(context.getUser().getLastLookProfile()).stream()
+                        .anyMatch(machFind -> machFind.getTo().equals(context.getUser().getProfile()))) {
+                    sendTextMessage(context, "Вы любимы");
+                }
+                sendNextProfile(context);
+            } else {
+                log.warn("Анкета не выбрана!");
             }
-            sendNextProfile(context);
+
         } else {
             sendTextMessage(context, "Вы не авторизованы!");
         }
@@ -168,16 +174,19 @@ public class LeftState implements State, StateSendMessage {
         Profile profile = getNextProfile(context);
         log.debug("Получен следующий профиль - '{}'", profile);
 
+        String text = "Подходяшие анкеты не найдены!";
+
         if (profile != null) {
             User user = context.getUser();
             user.setLastLookProfile(profile);
             userService.save(user);
 
             String profileAbout = profile.getAbout();
-            String text = profile.getName() + ":\n" + (profileAbout == null ? "" : profileAbout);
+            text = profile.getName() + ":\n" + (profileAbout == null ? "" : profileAbout);
             log.debug("Получено сообщение - '{}'", text);
-            sendTextMessageWithKey(context, text, getButton());
         }
+
+        sendTextMessageWithKey(context, text, getButton());
     }
 
     private List<Profile> getProfiles(BotContext context) {
@@ -217,11 +226,12 @@ public class LeftState implements State, StateSendMessage {
             }
 
         } else {
-            return profileList.get(0);
+            return profileList.size() != 0 ? profileList.get(0) : null;
         }
     }
 
     private enum Commands {
+        START,
         HELP,
         LEFT,
         RIGHT,

@@ -92,6 +92,7 @@ public class LookProfileState implements State, StateSendMessage {
     }
 
     private enum Commands {
+        START,
         HELP,
         EXIT
     }

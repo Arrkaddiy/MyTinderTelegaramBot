@@ -211,6 +211,7 @@ public class ProfileState implements State, StateSendMessage {
     }
 
     private enum Commands {
+        START,
         HELP,
         UPDATE,
         SING_IN,

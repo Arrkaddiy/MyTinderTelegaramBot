@@ -155,6 +155,7 @@ public class FavoritesState implements State, StateSendMessage {
     }
 
     private enum Commands {
+        START,
         HELP,
         NUMBER,
         EXIT

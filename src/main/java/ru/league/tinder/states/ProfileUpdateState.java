@@ -122,6 +122,7 @@ public class ProfileUpdateState implements State, StateSendMessage {
     }
 
     private enum Commands {
+        START,
         HELP,
         UPDATE,
         EXIT

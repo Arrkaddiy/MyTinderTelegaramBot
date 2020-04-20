@@ -131,6 +131,7 @@ public class StartState implements State, StateSendMessage {
     }
 
     private enum Commands {
+        START,
         HELP,
         LEFT,
         PROFILE,
