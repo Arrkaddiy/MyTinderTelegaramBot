@@ -198,6 +198,7 @@ public class ProfileState implements State, StateSendMessage {
         if (context.getUser().isAuthority()) {
             User user = context.getUser();
             user.setProfile(null);
+            user.setLastLookProfile(null);
             userService.save(user);
             log.debug("Сохранение пользователя - '{}'", user);
             sendTextMessageWithKey(context, "Выход выполнен", getButtonNotAuthority());

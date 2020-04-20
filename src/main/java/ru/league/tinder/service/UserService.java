@@ -29,4 +29,10 @@ public class UserService {
         log.debug("Сохранение пользователя - '{}'", user);
         userRepositories.save(user);
     }
+
+    @Transactional
+    public void delete(Long chatId) {
+        log.debug("Удаление пользователя - '{}'", chatId);
+        userRepositories.deleteByChatId(chatId);
+    }
 }

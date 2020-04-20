@@ -35,11 +35,17 @@ public class StateController {
         final long chatId = update.getMessage().getChatId();
         log.debug("Получен код чата - '{}'", chatId);
 
+        if (input.equalsIgnoreCase("/start")) {
+            rebase(chatId);
+        }
+
         User user = userService.findByChatId(chatId);
         log.debug("Получен пользователь - '{}'", user);
 
         State state;
         BotContext context;
+
+
 
         if (user == null) {
             user = new User(chatId, StateType.START);
@@ -82,5 +88,10 @@ public class StateController {
         log.debug("Сохрание нового состояния пользователя - '{}'", nextState);
         user.setState(nextState);
         userService.save(user);
+    }
+
+    private void rebase(Long chatId) {
+        log.debug("Перезапуск бота у пользователя - '{}'", chatId);
+        userService.delete(chatId);
     }
 }
