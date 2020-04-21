@@ -12,7 +12,6 @@ public class User {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    private Long chatId;
     private StateType state;
 
     @OneToOne
@@ -24,8 +23,7 @@ public class User {
     public User() {
     }
 
-    public User(Long chatId, StateType state) {
-        this.chatId = chatId;
+    public User(StateType state) {
         this.state = state;
     }
 
@@ -35,14 +33,6 @@ public class User {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public Long getChatId() {
-        return chatId;
-    }
-
-    public void setChatId(Long chatId) {
-        this.chatId = chatId;
     }
 
     public StateType getState() {
@@ -77,7 +67,6 @@ public class User {
     public String toString() {
         return "User {" +
                 "id = " + id + '\'' +
-                ", chatId = " + chatId + '\'' +
                 ", stateType = " + state + '\'' +
                 ", profile = " + profile + '\'' +
                 ", last = " + lastLookProfile + '\'' +
