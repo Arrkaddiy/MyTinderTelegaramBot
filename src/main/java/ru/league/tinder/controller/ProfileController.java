@@ -59,6 +59,7 @@ public class ProfileController {
             log.debug("Авторизация прошла успешно по name - '{}'", name);
             user.setProfile(profile);
             user.setLastLookProfile(null);
+            user.setState(StateType.LEFT);
             userService.save(user);
             log.debug("Сохранение профиля пользователя - '{}'", user);
             return "Успехъ";
@@ -94,6 +95,7 @@ public class ProfileController {
 
                 user.setProfile(profile);
                 user.setLastLookProfile(null);
+                user.setState(StateType.LEFT);
                 userService.save(user);
                 log.debug("Сохранение профиля под пользователем - '{}'", user);
                 return "Успехъ";

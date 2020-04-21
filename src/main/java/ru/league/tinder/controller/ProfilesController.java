@@ -3,10 +3,7 @@ package ru.league.tinder.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.league.tinder.entity.Mach;
 import ru.league.tinder.entity.Profile;
 import ru.league.tinder.entity.User;
@@ -14,7 +11,6 @@ import ru.league.tinder.model.ProfileModel;
 import ru.league.tinder.service.MachService;
 import ru.league.tinder.service.ProfileService;
 import ru.league.tinder.service.UserService;
-import ru.league.tinder.states.StateType;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -61,12 +57,12 @@ public class ProfilesController {
             text = profile.getName() + ":\n" + (profileAbout == null ? "" : profileAbout);
             log.debug("Получено сообщение - '{}'", text);
             return new ProfileModel().setProfile(profile);
+        } else {
+            return new ProfileModel(0L, "Система", "Подходящих анкет больше нет!");
         }
-
-        return null;
     }
 
-    @GetMapping("/right")
+    @PostMapping("/right")
     public String rightMethod(@PathVariable Long tinderId) {
         log.debug("Поиск пользователя по Id - '{}'", tinderId);
         User user = userService.findById(tinderId);
