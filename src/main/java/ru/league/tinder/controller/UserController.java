@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.league.tinder.entity.Profile;
 import ru.league.tinder.entity.User;
-import ru.league.tinder.model.ProfileModel;
 import ru.league.tinder.model.StateModel;
 import ru.league.tinder.service.UserService;
 import ru.league.tinder.states.StateType;

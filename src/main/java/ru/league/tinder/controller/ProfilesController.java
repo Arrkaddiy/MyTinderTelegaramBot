@@ -11,6 +11,7 @@ import ru.league.tinder.model.ProfileModel;
 import ru.league.tinder.service.MachService;
 import ru.league.tinder.service.ProfileService;
 import ru.league.tinder.service.UserService;
+import ru.league.tinder.states.StateType;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -51,6 +52,7 @@ public class ProfilesController {
 
         if (profile != null) {
             user.setLastLookProfile(profile);
+            user.setState(StateType.LEFT);
             userService.save(user);
 
             String profileAbout = profile.getAbout();

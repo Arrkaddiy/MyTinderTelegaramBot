@@ -126,7 +126,7 @@ public class ProfileController {
         if (user.isAuthority()) {
             user.setProfile(null);
             user.setLastLookProfile(null);
-            user.setState(StateType.PROFILE);
+            user.setState(StateType.LEFT);
             userService.save(user);
             log.debug("Сохранение пользователя - '{}'", user);
         }
