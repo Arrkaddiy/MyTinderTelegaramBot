@@ -9,7 +9,7 @@ import ru.league.tinder.service.ProfileService;
 
 @RestController
 @RequestMapping("tinder/user/{tinderId}/profiles")
-public class ProfilesController {
+public class ProfileController {
 
     private static final Logger log = LoggerFactory.getLogger(UserProfileController.class);
 
