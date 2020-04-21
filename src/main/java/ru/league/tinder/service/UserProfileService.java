@@ -1,20 +1,17 @@
-package ru.league.tinder.controller;
+package ru.league.tinder.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.stereotype.Service;
 import ru.league.tinder.entity.Profile;
 import ru.league.tinder.entity.User;
-import ru.league.tinder.service.ProfileService;
-import ru.league.tinder.service.UserService;
 import ru.league.tinder.states.StateType;
 
-@RestController
-@RequestMapping("tinder/user/{tinderId}/my_profile")
-public class ProfileController {
+@Service
+public class UserProfileService {
 
-    private static final Logger log = LoggerFactory.getLogger(ProfileController.class);
+    private static final Logger log = LoggerFactory.getLogger(UserProfileService.class);
 
     @Autowired
     private UserService userService;
@@ -22,8 +19,7 @@ public class ProfileController {
     @Autowired
     private ProfileService profileService;
 
-    @GetMapping
-    public String myProfileMethod(@PathVariable Long tinderId) {
+    public String myProfileMethod(Long tinderId) {
         log.debug("Поиск пользователя по Id - '{}'", tinderId);
         User user = userService.findById(tinderId);
         log.debug("Получен пользователь - '{}'", user);
@@ -40,8 +36,7 @@ public class ProfileController {
         return "Создание и редактирование вашей анкеты";
     }
 
-    @PostMapping("/sing_in")
-    public String singInMethod(@PathVariable Long tinderId, @RequestParam String name, @RequestParam String pass) {
+    public String singInMethod(Long tinderId, String name, String pass) {
         log.debug("Поиск пользователя по Id - '{}'", tinderId);
         User user = userService.findById(tinderId);
         log.debug("Получен пользователь - '{}'", user);
@@ -70,11 +65,7 @@ public class ProfileController {
         }
     }
 
-    @PostMapping("/sing_up")
-    public String singUpMethod(@PathVariable Long tinderId,
-                               @RequestParam String name,
-                               @RequestParam String pass,
-                               @RequestParam String sex) {
+    public String singUpMethod(Long tinderId, String name, String pass, String sex) {
         log.debug("Поиск пользователя по Id - '{}'", tinderId);
         User user = userService.findById(tinderId);
         log.debug("Получен пользователь - '{}'", user);
@@ -111,8 +102,7 @@ public class ProfileController {
         }
     }
 
-    @GetMapping("/sing_out")
-    public String singOutMethod(@PathVariable Long tinderId) {
+    public String singOutMethod(Long tinderId) {
         log.debug("Поиск пользователя по Id - '{}'", tinderId);
         User user = userService.findById(tinderId);
         log.debug("Получен пользователь - '{}'", user);
@@ -133,8 +123,7 @@ public class ProfileController {
         return "Выход выполнен";
     }
 
-    @PostMapping("/update")
-    public String updateMethod(@PathVariable Long tinderId, @RequestParam String about) {
+    public String updateMethod(Long tinderId, String about) {
         log.debug("Поиск пользователя по Id - '{}'", tinderId);
         User user = userService.findById(tinderId);
         log.debug("Получен пользователь - '{}'", user);
