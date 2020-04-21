@@ -34,7 +34,7 @@ public class StartState implements State {
         return execute(inputCommand, context);
     }
 
-    private ReplyKeyboardMarkup getButton() {
+    public ReplyKeyboardMarkup getButton() {
         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
         keyboardMarkup.setSelective(true);
         keyboardMarkup.setResizeKeyboard(true);
